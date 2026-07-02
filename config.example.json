@@ -1,0 +1,270 @@
+{
+  "imap": {
+    "host": "imap.gmail.com",
+    "port": 993,
+    "mailbox": "INBOX",
+    "search": "ALL"
+  },
+  "strategy": "balanced",
+  "criteria": {
+    "max_listing_price": 500000,
+    "target_locations": [
+      "Chamonix",
+      "Argentiere",
+      "Les Houches",
+      "Servoz",
+      "Passy",
+      "Sallanches",
+      "Domancy",
+      "Saint-Gervais"
+    ],
+    "location_aliases": {
+      "Chamonix": [
+        "chamonix",
+        "chamonix-mont-blanc",
+        "chamonix mont blanc"
+      ],
+      "Argentiere": [
+        "argentiere",
+        "argentière"
+      ],
+      "Les Houches": [
+        "les houches"
+      ],
+      "Servoz": [
+        "servoz"
+      ],
+      "Passy": [
+        "passy"
+      ],
+      "Sallanches": [
+        "sallanches"
+      ],
+      "Domancy": [
+        "domancy"
+      ],
+      "Saint-Gervais": [
+        "saint-gervais",
+        "saint gervais",
+        "st-gervais",
+        "st gervais",
+        "saint-gervais-les-bains"
+      ],
+      "Le Fayet": [
+        "le fayet",
+        "saint-gervais-le-fayet"
+      ],
+      "Plateau d'Assy": [
+        "plateau d'assy",
+        "plateau assy",
+        "plateau d assy",
+        "plateau-d-assy",
+        "plateau dassy"
+      ]
+    },
+    "market_price_per_m2": {
+      "Chamonix": 9630,
+      "Argentiere": 9630,
+      "Les Houches": 7160,
+      "Saint-Gervais": 5242,
+      "Servoz": 6335,
+      "Passy": 3824,
+      "Sallanches": 3597,
+      "Domancy": 4308,
+      "Le Fayet": 3600,
+      "Plateau d'Assy": 3200
+    },
+    "rent_per_m2_monthly": {
+      "Chamonix": 31,
+      "Argentiere": 28,
+      "Les Houches": 24,
+      "Saint-Gervais": 21,
+      "Servoz": 18,
+      "Passy": 17,
+      "Sallanches": 17,
+      "Domancy": 17,
+      "Le Fayet": 13,
+      "Plateau d'Assy": 13
+    },
+    "location_potential_score": {
+      "Chamonix": 95,
+      "Argentiere": 90,
+      "Les Houches": 75,
+      "Saint-Gervais": 65,
+      "Servoz": 55,
+      "Passy": 50,
+      "Sallanches": 45,
+      "Domancy": 48,
+      "Le Fayet": 30,
+      "Plateau d'Assy": 0
+    },
+    "excluded_locations": [
+      "Plateau d'Assy"
+    ],
+    "min_surface_m2": 20,
+    "max_charges_vs_rent_ratio": 0.35,
+    "rent_unfurnished_malus": 0.9,
+    "unfurnished_keywords": [
+      "non meuble",
+      "non meublee",
+      "non-meuble",
+      "loue nu",
+      "loue nue",
+      "location nue",
+      "loue vide",
+      "location vide",
+      "vide de meuble",
+      "appartement nu",
+      "bien nu"
+    ],
+    "positive_keywords": [
+      "balcon",
+      "terrasse",
+      "parking",
+      "garage",
+      "place de parking",
+      "vue",
+      "vue montagne",
+      "lumineux",
+      "calme",
+      "renove",
+      "refait",
+      "cuisine equipee",
+      "casier a ski",
+      "cave",
+      "ski aux pieds",
+      "pied des pistes"
+    ],
+    "negative_keywords": [
+      "dpe f",
+      "dpe g",
+      "passoire thermique",
+      "bruyant",
+      "sombre",
+      "humide",
+      "humidite",
+      "vis-a-vis",
+      "vis a vis",
+      "route nationale",
+      "rn",
+      "proche route"
+    ],
+    "light_work_keywords": [
+      "rafraichissement",
+      "a rafraichir",
+      "petits travaux",
+      "travaux de rafraichissement"
+    ],
+    "heavy_work_keywords": [
+      "gros travaux",
+      "entierement a renover",
+      "a renover entierement",
+      "plateau brut",
+      "sans cuisine",
+      "sans salle d'eau",
+      "sans salle de bain",
+      "insalubre",
+      "ruine",
+      "inhabitable"
+    ],
+    "excluded_keywords": [
+      "viager",
+      "plateau d'assy",
+      "plateau assy"
+    ],
+    "reclassify_location_keywords": {
+      "Saint-Gervais": {
+        "le fayet": "Le Fayet",
+        "saint-gervais-le-fayet": "Le Fayet"
+      }
+    },
+    "verify_exclusions_locations": [
+      "Passy",
+      "Saint-Gervais"
+    ],
+    "structured_product_keywords": [
+      "residence de tourisme",
+      "residence prestige",
+      "residence services",
+      "residence hoteliere",
+      "residence avec services",
+      "bail commercial",
+      "fonds de commerce",
+      "droit au bail",
+      "nue-propriete",
+      "nue propriete",
+      "usufruit",
+      "demembrement",
+      "odalys",
+      "pierre et vacances",
+      "pierre & vacances",
+      "mmv",
+      "madame vacances",
+      "groupe odalys",
+      "exploitant",
+      "gestionnaire",
+      "loyer garanti",
+      "rendement garanti",
+      "rentabilite assuree",
+      "rentabilite garantie",
+      "investisseur patrimonial",
+      "investissement patrimonial",
+      "patrimonial",
+      "scpi",
+      "opci",
+      "fonds immobilier",
+      "gestion locative assuree",
+      "gestion locative incluse",
+      "bail en cours",
+      "bail jusqu",
+      "bail commercial en cours",
+      "occupation personnelle",
+      "semaine disponible",
+      "semaines disponibles",
+      "tva recuperable",
+      "tva incluse",
+      "tva 20%",
+      "defiscalisation",
+      "loi pinel",
+      "loi denormandie",
+      "zone tendue"
+    ]
+  },
+  "scoring_weights": {
+    "balanced": {
+      "yield": 0.35,
+      "value": 0.3,
+      "location": 0.15,
+      "cashflow_risk": 0.15,
+      "micro": 0.0,
+      "structured": 0.1
+    },
+    "yield": {
+      "yield": 0.5,
+      "value": 0.2,
+      "location": 0.1,
+      "cashflow_risk": 0.15,
+      "micro": 0.0,
+      "structured": 0.1
+    },
+    "growth": {
+      "yield": 0.2,
+      "value": 0.35,
+      "location": 0.3,
+      "cashflow_risk": 0.1,
+      "micro": 0.0,
+      "structured": 0.1
+    }
+  },
+  "scoring_thresholds": {
+    "yield_excellent": 7.0,
+    "yield_good": 5.0,
+    "yield_fair": 3.5,
+    "yield_poor": 2.0,
+    "value_bargain": -20,
+    "value_good": -10,
+    "value_fair": 0,
+    "value_expensive": 15,
+    "structured_penalty": -40
+  }
+}

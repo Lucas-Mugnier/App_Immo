@@ -1,0 +1,19 @@
+{
+  "date": "2026-06-12",
+  "nego_discount": 0.04,
+  "ratio_filter": [
+    0.7,
+    1.5
+  ],
+  "correction_cap": [
+    0.8,
+    1.35
+  ],
+  "global_correction": 1.0,
+  "by_commune": {
+    "CHAMONIX MONT BLANC": 0.8615297095797645,
+    "PASSY": 1.0510948905109487,
+    "SAINT GERVAIS LES BAINS": 1.0754173297871725
+  },
+  "dry_run": false
+}

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appart Alert — 3 Directions Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 13px; }
+
+    body {
+      background: #080810;
+      color: #c8c8d8;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      padding: 36px 28px 60px;
+    }
+
+    /* ── Page chrome ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #e0e0f0;
+      letter-spacing: 0.01em;
+      margin-bottom: 6px;
+    }
+
+    .page-sub {
+      font-size: 0.72rem;
+      color: #44445a;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── 3-col layout ── */
+    .directions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1380px;
+      margin: 0 auto;
+    }
+
+    .direction-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .direction-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+
+    .dir-name {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #444460;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+
+    /* ── Mode toggle ── */
+    .mode-toggle {
+      display: flex;
+      gap: 2px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: none;
+      color: #38384e;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      padding: 3px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .mode-btn.active {
+      background: rgba(255,255,255,0.10);
+      color: #d0d0e8;
+    }
+
+    /* ── Preview frame ── */
+    .preview-frame {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.07);
+      height: 600px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       CSS CUSTOM PROPS PER DIRECTION + MODE
+    ═══════════════════════════════════════════════ */
+
+    /* — SOMMET light (default) — */
+    .sommet {
+      --bg:         oklch(0.97 0.004 220);
+      --surface:    oklch(0.99 0.002 220);
+      --border:     oklch(0.88 0.010 220);
+      --text:       oklch(0.14 0.012 220);
+      --sub:        oklch(0.40 0.010 220);
+      --faint:      oklch(0.62 0.008 220);
+      --accent:     oklch(0.44 0.20 220);
+      --accent-bg:  oklch(0.93 0.025 220);
+      --s-high:     oklch(0.38 0.13 155);
+      --s-mid:      oklch(0.58 0.13 60);
+      --s-low:      oklch(0.50 0.18 25);
+      --font-d:     'Syne', sans-serif;
+      --font-m:     'JetBrains Mono', monospace;
+    }
+    .sommet.dusk {
+      --bg:         oklch(0.18 0.020 230);
+      --surface:    oklch(0.23 0.018 230);
+      --border:     oklch(0.32 0.015 230);
+      --text:       oklch(0.93 0.006 220);
+      --sub:        oklch(0.68 0.008 220);
+      --faint:      oklch(0.46 0.007 220);
+      --accent:     oklch(0.70 0.18 220);
+      --accent-bg:  oklch(0.25 0.025 220);
+      --s-high:     oklch(0.68 0.15 155);
+      --s-mid:      oklch(0.80 0.14 60);
+      --s-low:      oklch(0.65 0.16 25);
+    }
+    .sommet.dark {
+      --bg:         oklch(0.09 0.010 230);
+      --surface:    oklch(0.13 0.012 230);
+      --border:     oklch(0.22 0.012 230);
+      --text:       oklch(0.94 0.005 220);
+      --sub:        oklch(0.62 0.007 220);
+      --faint:      oklch(0.40 0.006 220);
+      --accent:     oklch(0.70 0.18 220);
+      --accent-bg:  oklch(0.16 0.025 220);
+      --s-high:     oklch(0.68 0.15 155);
+      --s-mid:      oklch(0.80 0.14 60);
+      --s-low:      oklch(0.65 0.16 25);
+    }
+
+    /* — SIGNAL light (default) — */
+    .signal {
+      --bg:         oklch(0.97 0.006 250);
+      --surface:    oklch(0.99 0.003 250);
+      --border:     oklch(0.88 0.010 250);
+      --text:       oklch(0.14 0.010 250);
+      --sub:        oklch(0.40 0.010 250);
+      --faint:      oklch(0.62 0.008 250);
+      --accent:     oklch(0.44 0.22 280);
+      --accent-bg:  oklch(0.93 0.030 280);
+      --s-high:     oklch(0.38 0.13 155);
+      --s-mid:      oklch(0.58 0.13 60);
+      --s-low:      oklch(0.50 0.18 25);
+      --font-d:     'Instrument Sans', sans-serif;
+      --font-m:     'JetBrains Mono', monospace;
+    }
+    .signal.dusk {
+      --bg:         oklch(0.20 0.030 265);
+      --surface:    oklch(0.26 0.025 265);
+      --border:     oklch(0.34 0.020 265);
+      --text:       oklch(0.93 0.008 265);
+      --sub:        oklch(0.68 0.010 265);
+      --faint:      oklch(0.46 0.008 265);
+      --accent:     oklch(0.80 0.13 60);
+      --accent-bg:  oklch(0.27 0.028 60);
+      --s-high:     oklch(0.70 0.13 155);
+      --s-mid:      oklch(0.80 0.13 60);
+      --s-low:      oklch(0.65 0.16 25);
+    }
+    .signal.dark {
+      --bg:         oklch(0.10 0.008 265);
+      --surface:    oklch(0.15 0.012 265);
+      --border:     oklch(0.23 0.012 265);
+      --text:       oklch(0.95 0.005 265);
+      --sub:        oklch(0.62 0.008 265);
+      --faint:      oklch(0.40 0.006 265);
+      --accent:     oklch(0.80 0.15 60);
+      --accent-bg:  oklch(0.17 0.030 60);
+      --s-high:     oklch(0.70 0.13 155);
+      --s-mid:      oklch(0.80 0.13 60);
+      --s-low:      oklch(0.65 0.16 25);
+    }
+
+    /* — ALTITUDE light (default) — */
+    .altitude {
+      --bg:         oklch(0.97 0.008 150);
+      --surface:    oklch(0.99 0.004 150);
+      --border:     oklch(0.87 0.012 150);
+      --text:       oklch(0.14 0.012 150);
+      --sub:        oklch(0.40 0.010 150);
+      --faint:      oklch(0.62 0.008 150);
+      --accent:     oklch(0.36 0.10 150);
+      --accent-gold:oklch(0.52 0.12 85);
+      --accent-bg:  oklch(0.92 0.018 150);
+      --s-high:     oklch(0.36 0.10 150);
+      --s-mid:      oklch(0.56 0.13 60);
+      --s-low:      oklch(0.50 0.18 25);
+      --font-d:     'Cormorant Garamond', serif;
+      --font-m:     'DM Mono', monospace;
+    }
+    .altitude.dusk {
+      --bg:         oklch(0.21 0.022 155);
+      --surface:    oklch(0.27 0.018 155);
+      --border:     oklch(0.35 0.015 155);
+      --text:       oklch(0.93 0.008 150);
+      --sub:        oklch(0.68 0.010 150);
+      --faint:      oklch(0.46 0.008 150);
+      --accent:     oklch(0.70 0.10 150);
+      --accent-gold:oklch(0.78 0.12 85);
+      --accent-bg:  oklch(0.28 0.020 150);
+      --s-high:     oklch(0.70 0.10 155);
+      --s-mid:      oklch(0.78 0.12 85);
+      --s-low:      oklch(0.65 0.14 25);
+    }
+    .altitude.dark {
+      --bg:         oklch(0.11 0.015 155);
+      --surface:    oklch(0.16 0.014 155);
+      --border:     oklch(0.25 0.013 155);
+      --text:       oklch(0.95 0.005 150);
+      --sub:        oklch(0.62 0.008 150);
+      --faint:      oklch(0.40 0.007 150);
+      --accent:     oklch(0.70 0.10 155);
+      --accent-gold:oklch(0.78 0.12 85);
+      --accent-bg:  oklch(0.18 0.020 150);
+      --s-high:     oklch(0.70 0.10 155);
+      --s-mid:      oklch(0.78 0.12 85);
+      --s-low:      oklch(0.65 0.14 25);
+    }
+
+    /* ═══════════════════════════════════════════════
+       PREVIEW SHELL (shared)
+    ═══════════════════════════════════════════════ */
+
+    .preview {
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: background 0.3s, color 0.3s;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .p-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      gap: 10px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .p-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .p-title {
+      font-family: var(--font-d);
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--accent);
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .p-subtitle {
+      font-family: var(--font-m);
+      font-size: 0.55rem;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+      transition: color 0.3s;
+    }
+
+    .p-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 10px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+      overflow-x: auto;
+    }
+
+    .p-tab {
+      font-family: var(--font-d);
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--faint);
+      padding: 7px 9px;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      cursor: default;
+      transition: color 0.2s;
+    }
+
+    .p-tab.act {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .p-filters {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: border-color 0.3s;
+    }
+
+    .p-input {
+      font-family: var(--font-m);
+      font-size: 0.65rem;
+      color: var(--faint);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      flex: 1;
+      min-width: 60px;
+      outline: none;
+      transition: background 0.3s, border-color 0.3s;
+      pointer-events: none;
+    }
+
+    .p-input::placeholder { color: var(--faint); opacity: 0.7; }
+
+    .p-body {
+      flex: 1;
+      padding: 10px 12px;
+      overflow-y: auto;
+    }
+
+    /* shared badge + button */
+    .commune-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-family: var(--font-m);
+      font-size: 0.62rem;
+      white-space: nowrap;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .chip {
+      font-family: var(--font-m);
+      font-size: 0.58rem;
+      color: var(--faint);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    .p-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--sub);
+      font-family: var(--font-m);
+      font-size: 0.60rem;
+      padding: 3px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.3s;
+    }
+    .p-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .p-actions { display: flex; gap: 4px; }
+
+    /* yield badges */
+    .yb {
+      font-family: var(--font-m);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       DIRECTION 1 — SOMMET
+    ═══════════════════════════════════════════════ */
+
+    .sommet .p-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sommet .p-th {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      padding: 5px 7px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    .sommet .p-tr {
+      border-bottom: 1px solid var(--border);
+      animation: rowIn 0.22s ease both;
+      transition: background 0.12s;
+    }
+    .sommet .p-tr:hover { background: var(--accent-bg); }
+
+    .sommet .p-td {
+      padding: 8px 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.70rem;
+      color: var(--text);
+      vertical-align: middle;
+      transition: color 0.3s;
+    }
+
+    /* topo peak score */
+    .topo-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      width: 32px;
+    }
+
+    .topo-peak {
+      width: 0; height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 7px solid var(--sc);
+      transition: border-color 0.3s;
+    }
+
+    .topo-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--sc);
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .topo-line {
+      width: 18px; height: 1px;
+      background: var(--sc);
+      opacity: 0.4;
+      transition: background 0.3s;
+    }
+
+    /* ═══════════════════════════════════════════════
+       DIRECTION 2 — SIGNAL
+    ═══════════════════════════════════════════════ */
+
+    .signal .p-header {
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .signal.dusk .p-header,
+    .signal.dark .p-header {
+      background: linear-gradient(135deg, var(--surface) 0%, color-mix(in oklch, var(--accent) 6%, var(--surface)) 100%);
+    }
+
+    .signal .p-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .signal .p-th {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 600;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 5px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    .signal .p-tr {
+      border-bottom: 1px solid var(--border);
+      animation: rowIn 0.22s ease both;
+      transition: transform 0.10s, box-shadow 0.10s, background 0.3s;
+    }
+    .signal .p-tr:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      background: var(--surface);
+    }
+
+    .signal .p-td {
+      padding: 7px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text);
+      vertical-align: middle;
+      transition: color 0.3s;
+    }
+
+    /* fill-bar score */
+    .fill-score {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fill-track {
+      width: 44px; height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+
+    .fill-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--sc);
+      transition: background 0.3s;
+    }
+
+    .fill-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--sc);
+      min-width: 18px;
+      transition: color 0.3s;
+    }
+
+    /* header stat chips */
+    .hstat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
+    }
+
+    .hstat strong { color: var(--accent); transition: color 0.3s; }
+
+    /* ═══════════════════════════════════════════════
+       DIRECTION 3 — ALTITUDE
+    ═══════════════════════════════════════════════ */
+
+    .altitude .p-title {
+      font-style: italic;
+      font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+
+    .altitude .p-tab {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.78rem;
+      font-style: italic;
+    }
+
+    .altitude .p-body {
+      padding: 12px;
+    }
+
+    .alt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .alt-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 12px 10px 10px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      animation: rowIn 0.25s ease both;
+      transition: border-color 0.2s, background 0.3s;
+    }
+    .alt-card:hover { border-color: var(--accent); }
+
+    /* ghost number in bg */
+    .alt-ghost {
+      position: absolute;
+      top: 4px; right: 6px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      color: var(--sc);
+      opacity: 0.09;
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      transition: color 0.3s;
+    }
+
+    .alt-score {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 600;
+      color: var(--sc);
+      line-height: 1;
+      margin-bottom: 3px;
+      transition: color 0.3s;
+    }
+
+    .alt-rule {
+      width: 20px; height: 1px;
+      background: var(--sc);
+      margin-bottom: 7px;
+      transition: background 0.3s;
+    }
+
+    .alt-commune {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 4px;
+      transition: color 0.3s;
+    }
+
+    .alt-price {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+      transition: color 0.3s;
+    }
+
+    .alt-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.60rem;
+      color: var(--faint);
+      transition: color 0.3s;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SCORE COLOR HELPERS
+    ═══════════════════════════════════════════════ */
+
+    .sh { --sc: var(--s-high); }
+    .sm { --sc: var(--s-mid);  }
+    .sl { --sc: var(--s-low);  }
+
+    .yb-h { background: color-mix(in oklch, var(--s-high) 14%, transparent); color: var(--s-high); }
+    .yb-m { background: color-mix(in oklch, var(--s-mid)  14%, transparent); color: var(--s-mid);  }
+    .yb-l { background: color-mix(in oklch, var(--s-low)  14%, transparent); color: var(--s-low);  }
+
+    /* ═══════════════════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════════════════ */
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .sommet .p-tr:nth-child(1), .signal .p-tr:nth-child(1), .alt-card:nth-child(1) { animation-delay: 0.04s; }
+    .sommet .p-tr:nth-child(2), .signal .p-tr:nth-child(2), .alt-card:nth-child(2) { animation-delay: 0.09s; }
+    .sommet .p-tr:nth-child(3), .signal .p-tr:nth-child(3), .alt-card:nth-child(3) { animation-delay: 0.14s; }
+    .sommet .p-tr:nth-child(4), .signal .p-tr:nth-child(4), .alt-card:nth-child(4) { animation-delay: 0.19s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .p-tr, .alt-card { animation: none !important; }
+    }
+
+    /* scrollbar in preview */
+    .preview::-webkit-scrollbar { width: 3px; }
+    .preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-title">Appart Alert — Prototype 3 directions</div>
+    <div class="page-sub">Bascule les modes Light / Dusk / Dark sur chaque colonne indépendamment</div>
+  </header>
+
+  <div class="directions-grid">
+
+    <!-- ════════════════════════════════════
+         DIRECTION 1 — SOMMET
+    ════════════════════════════════════ -->
+    <div class="direction-wrap">
+      <div class="direction-label">
+        <span class="dir-name">01 · Sommet</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('s1','sommet','light',this)">Light</button>
+          <button class="mode-btn"        onclick="setMode('s1','sommet','dusk',this)">Dusk</button>
+          <button class="mode-btn"        onclick="setMode('s1','sommet','dark',this)">Dark</button>
+        </div>
+      </div>
+      <div class="preview-frame">
+        <div class="preview sommet" id="s1">
+
+          <header class="p-header">
+            <div class="p-logo">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <polyline points="11,3 19,19 3,19" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+                <polyline points="11,8 15,16 7,16"  stroke="var(--accent)" stroke-width="1"   stroke-linejoin="round" fill="var(--accent-bg)"/>
+                <line x1="4" y1="19" x2="18" y2="19" stroke="var(--border)" stroke-width="1"/>
+              </svg>
+              <div>
+                <div class="p-title">Appart Alert</div>
+                <div class="p-subtitle">Chamonix · Argentière · Les Houches</div>
+              </div>
+            </div>
+            <span class="chip">4 annonces</span>
+          </header>
+
+          <nav class="p-tabs">
+            <span class="p-tab act">Appartements</span>
+            <span class="p-tab">Maisons</span>
+            <span class="p-tab">Insights</span>
+            <span class="p-tab">Simulation</span>
+          </nav>
+
+          <div class="p-filters">
+            <input class="p-input" placeholder="Rechercher…">
+            <input class="p-input" placeholder="Score min">
+            <input class="p-input" placeholder="Prix max">
+          </div>
+
+          <div class="p-body">
+            <table class="p-table">
+              <thead>
+                <tr>
+                  <th class="p-th">Cote</th>
+                  <th class="p-th">Commune</th>
+                  <th class="p-th">Prix</th>
+                  <th class="p-th">Surf.</th>
+                  <th class="p-th">Rdt.</th>
+                  <th class="p-th"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="p-tr sh">
+                  <td class="p-td">
+                    <div class="topo-score">
+                      <div class="topo-peak"></div>
+                      <div class="topo-num">91</div>
+                      <div class="topo-line"></div>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Argentière</span></td>
+                  <td class="p-td" style="font-weight:600">198 k€</td>
+                  <td class="p-td">28 m²</td>
+                  <td class="p-td"><span class="yb yb-h">7.8%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sh">
+                  <td class="p-td">
+                    <div class="topo-score">
+                      <div class="topo-peak"></div>
+                      <div class="topo-num">82</div>
+                      <div class="topo-line"></div>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Les Houches</span></td>
+                  <td class="p-td" style="font-weight:600">320 k€</td>
+                  <td class="p-td">58 m²</td>
+                  <td class="p-td"><span class="yb yb-h">5.4%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sm">
+                  <td class="p-td">
+                    <div class="topo-score">
+                      <div class="topo-peak"></div>
+                      <div class="topo-num">67</div>
+                      <div class="topo-line"></div>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Chamonix</span></td>
+                  <td class="p-td" style="font-weight:600">485 k€</td>
+                  <td class="p-td">42 m²</td>
+                  <td class="p-td"><span class="yb yb-m">3.6%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sl">
+                  <td class="p-td">
+                    <div class="topo-score">
+                      <div class="topo-peak"></div>
+                      <div class="topo-num">44</div>
+                      <div class="topo-line"></div>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Saint-Gervais</span></td>
+                  <td class="p-td" style="font-weight:600">410 k€</td>
+                  <td class="p-td">89 m²</td>
+                  <td class="p-td"><span class="yb yb-l">4.1%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         DIRECTION 2 — SIGNAL
+    ════════════════════════════════════ -->
+    <div class="direction-wrap">
+      <div class="direction-label">
+        <span class="dir-name">02 · Signal</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('s2','signal','light',this)">Light</button>
+          <button class="mode-btn"        onclick="setMode('s2','signal','dusk',this)">Dusk</button>
+          <button class="mode-btn"        onclick="setMode('s2','signal','dark',this)">Dark</button>
+        </div>
+      </div>
+      <div class="preview-frame">
+        <div class="preview signal" id="s2">
+
+          <header class="p-header">
+            <div class="p-logo">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect x="3"  y="14" width="3" height="5" fill="var(--accent)" rx="1" opacity="0.35"/>
+                <rect x="8"  y="10" width="3" height="9" fill="var(--accent)" rx="1" opacity="0.60"/>
+                <rect x="13" y="6"  width="3" height="13" fill="var(--accent)" rx="1" opacity="0.80"/>
+                <rect x="18" y="3"  width="3" height="16" fill="var(--accent)" rx="1"/>
+              </svg>
+              <div>
+                <div class="p-title">Appart Alert</div>
+                <div class="p-subtitle">Chamonix · Argentière · Les Houches</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center">
+              <span class="hstat"><strong>4</strong> actives</span>
+              <span class="hstat">moy. <strong>71</strong></span>
+            </div>
+          </header>
+
+          <nav class="p-tabs">
+            <span class="p-tab act">Appartements</span>
+            <span class="p-tab">Maisons</span>
+            <span class="p-tab">Insights</span>
+            <span class="p-tab">Simulation</span>
+          </nav>
+
+          <div class="p-filters">
+            <input class="p-input" placeholder="Rechercher…">
+            <input class="p-input" placeholder="Score min">
+            <input class="p-input" placeholder="Prix max">
+          </div>
+
+          <div class="p-body" style="padding:8px 10px">
+            <table class="p-table">
+              <thead>
+                <tr>
+                  <th class="p-th">Score</th>
+                  <th class="p-th">Commune</th>
+                  <th class="p-th">Prix</th>
+                  <th class="p-th">Surf.</th>
+                  <th class="p-th">Rdt.</th>
+                  <th class="p-th"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="p-tr sh">
+                  <td class="p-td">
+                    <div class="fill-score">
+                      <div class="fill-track"><div class="fill-bar" style="width:91%"></div></div>
+                      <span class="fill-num">91</span>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Argentière</span></td>
+                  <td class="p-td" style="font-weight:600">198 k€</td>
+                  <td class="p-td">28 m²</td>
+                  <td class="p-td"><span class="yb yb-h">7.8%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sh">
+                  <td class="p-td">
+                    <div class="fill-score">
+                      <div class="fill-track"><div class="fill-bar" style="width:82%"></div></div>
+                      <span class="fill-num">82</span>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Les Houches</span></td>
+                  <td class="p-td" style="font-weight:600">320 k€</td>
+                  <td class="p-td">58 m²</td>
+                  <td class="p-td"><span class="yb yb-h">5.4%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sm">
+                  <td class="p-td">
+                    <div class="fill-score">
+                      <div class="fill-track"><div class="fill-bar" style="width:67%"></div></div>
+                      <span class="fill-num">67</span>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Chamonix</span></td>
+                  <td class="p-td" style="font-weight:600">485 k€</td>
+                  <td class="p-td">42 m²</td>
+                  <td class="p-td"><span class="yb yb-m">3.6%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+                <tr class="p-tr sl">
+                  <td class="p-td">
+                    <div class="fill-score">
+                      <div class="fill-track"><div class="fill-bar" style="width:44%"></div></div>
+                      <span class="fill-num">44</span>
+                    </div>
+                  </td>
+                  <td class="p-td"><span class="commune-tag">Saint-Gervais</span></td>
+                  <td class="p-td" style="font-weight:600">410 k€</td>
+                  <td class="p-td">89 m²</td>
+                  <td class="p-td"><span class="yb yb-l">4.1%</span></td>
+                  <td class="p-td"><div class="p-actions"><button class="p-btn">↗</button><button class="p-btn">✓</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         DIRECTION 3 — ALTITUDE
+    ════════════════════════════════════ -->
+    <div class="direction-wrap">
+      <div class="direction-label">
+        <span class="dir-name">03 · Altitude</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('s3','altitude','light',this)">Light</button>
+          <button class="mode-btn"        onclick="setMode('s3','altitude','dusk',this)">Dusk</button>
+          <button class="mode-btn"        onclick="setMode('s3','altitude','dark',this)">Dark</button>
+        </div>
+      </div>
+      <div class="preview-frame">
+        <div class="preview altitude" id="s3">
+
+          <header class="p-header">
+            <div class="p-logo">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <circle cx="11" cy="11" r="8"   stroke="var(--accent)"      stroke-width="1.1" fill="none"/>
+                <circle cx="11" cy="11" r="5"   stroke="var(--accent)"      stroke-width="0.7" fill="none" opacity="0.45"/>
+                <circle cx="11" cy="11" r="1.8" fill="var(--accent-gold, var(--accent))"/>
+              </svg>
+              <div>
+                <div class="p-title">Appart Alert</div>
+                <div class="p-subtitle">Chamonix · Argentière · Les Houches</div>
+              </div>
+            </div>
+            <span class="chip">4 biens</span>
+          </header>
+
+          <nav class="p-tabs">
+            <span class="p-tab act">Appartements</span>
+            <span class="p-tab">Maisons</span>
+            <span class="p-tab">Insights</span>
+            <span class="p-tab">Simulation</span>
+          </nav>
+
+          <div class="p-filters">
+            <input class="p-input" placeholder="Rechercher…">
+            <input class="p-input" placeholder="Score min">
+            <input class="p-input" placeholder="Prix max">
+          </div>
+
+          <div class="p-body">
+            <div class="alt-grid">
+
+              <div class="alt-card sh">
+                <div class="alt-ghost">91</div>
+                <div class="alt-score">91</div>
+                <div class="alt-rule"></div>
+                <div class="alt-commune">Argentière</div>
+                <div class="alt-price">198 000 €</div>
+                <div class="alt-meta">Studio · 28 m² · <span style="color:var(--sc)">7.8%</span></div>
+              </div>
+
+              <div class="alt-card sh">
+                <div class="alt-ghost">82</div>
+                <div class="alt-score">82</div>
+                <div class="alt-rule"></div>
+                <div class="alt-commune">Les Houches</div>
+                <div class="alt-price">320 000 €</div>
+                <div class="alt-meta">T3 · 58 m² · <span style="color:var(--sc)">5.4%</span></div>
+              </div>
+
+              <div class="alt-card sm">
+                <div class="alt-ghost">67</div>
+                <div class="alt-score">67</div>
+                <div class="alt-rule"></div>
+                <div class="alt-commune">Chamonix</div>
+                <div class="alt-price">485 000 €</div>
+                <div class="alt-meta">T2 · 42 m² · <span style="color:var(--sc)">3.6%</span></div>
+              </div>
+
+              <div class="alt-card sl">
+                <div class="alt-ghost">44</div>
+                <div class="alt-score">44</div>
+                <div class="alt-rule"></div>
+                <div class="alt-commune">Saint-Gervais</div>
+                <div class="alt-price">410 000 €</div>
+                <div class="alt-meta">T4 · 89 m² · <span style="color:var(--sc)">4.1%</span></div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /directions-grid -->
+
+  <script>
+    function setMode(elId, dirClass, mode, btn) {
+      const el = document.getElementById(elId);
+
+      // Reset to base class
+      el.className = 'preview ' + dirClass;
+
+      // Apply mode class
+      if (mode === 'dusk') el.classList.add('dusk');
+      if (mode === 'dark') el.classList.add('dark');
+
+      // Re-trigger row animation by forcing reflow
+      el.querySelectorAll('.p-tr, .alt-card').forEach(r => {
+        r.style.animation = 'none';
+        r.offsetHeight;
+        r.style.animation = '';
+      });
+
+      // Update button states within this toggle group
+      btn.closest('.mode-toggle').querySelectorAll('.mode-btn')
+        .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>

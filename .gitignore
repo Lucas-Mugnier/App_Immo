@@ -1,0 +1,11 @@
+.env
+*.sqlite
+__pycache__/
+*.pyc
+dvf/
+node_modules/
+dist/
+.claude/
+test_*.png
+sessions/
+*.log

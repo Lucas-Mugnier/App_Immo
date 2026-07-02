@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitude — Card Exploration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      transition: background 0.35s, color 0.35s;
+      padding: 0 0 60px;
+    }
+
+    /* ══════════════════════════════════════════
+       THEMES
+    ══════════════════════════════════════════ */
+    body.light {
+      --bg:           oklch(0.97 0.008 150);
+      --surface:      oklch(1.00 0.003 150);
+      --surface2:     oklch(0.96 0.008 150);
+      --border:       oklch(0.87 0.012 150);
+      --border2:      oklch(0.78 0.016 150);
+      --text:         oklch(0.14 0.012 150);
+      --sub:          oklch(0.38 0.010 150);
+      --faint:        oklch(0.60 0.008 150);
+      --accent:       oklch(0.36 0.10 150);
+      --accent-glow:  oklch(0.36 0.10 150 / 0.10);
+      --gold:         oklch(0.50 0.12 85);
+      --s-high:       oklch(0.34 0.12 150);
+      --s-mid:        oklch(0.52 0.14 50);
+      --s-low:        oklch(0.46 0.18 22);
+      --disc-bg:      oklch(0.91 0.030 150);
+      --disc-text:    oklch(0.28 0.12 150);
+      --over-bg:      oklch(0.93 0.028 22);
+      --over-text:    oklch(0.38 0.16 22);
+      --shadow:       0 1px 3px oklch(0.14 0.012 150 / 0.06), 0 4px 16px oklch(0.14 0.012 150 / 0.04);
+      --shadow-hover: 0 3px 10px oklch(0.14 0.012 150 / 0.10), 0 10px 28px oklch(0.14 0.012 150 / 0.07);
+    }
+
+    body.dusk {
+      --bg:           oklch(0.21 0.022 155);
+      --surface:      oklch(0.27 0.018 155);
+      --surface2:     oklch(0.32 0.016 155);
+      --border:       oklch(0.36 0.014 155);
+      --border2:      oklch(0.44 0.012 155);
+      --text:         oklch(0.93 0.008 150);
+      --sub:          oklch(0.68 0.010 150);
+      --faint:        oklch(0.46 0.008 150);
+      --accent:       oklch(0.70 0.10 150);
+      --accent-glow:  oklch(0.70 0.10 150 / 0.16);
+      --gold:         oklch(0.78 0.12 85);
+      --s-high:       oklch(0.68 0.12 150);
+      --s-mid:        oklch(0.76 0.14 55);
+      --s-low:        oklch(0.65 0.16 22);
+      --disc-bg:      oklch(0.28 0.032 150);
+      --disc-text:    oklch(0.76 0.12 150);
+      --over-bg:      oklch(0.27 0.028 22);
+      --over-text:    oklch(0.74 0.14 22);
+      --shadow:       0 2px 6px oklch(0 0 0 / 0.22), 0 8px 22px oklch(0 0 0 / 0.16);
+      --shadow-hover: 0 4px 12px oklch(0 0 0 / 0.32), 0 12px 30px oklch(0 0 0 / 0.22);
+    }
+
+    body.dark {
+      --bg:           oklch(0.11 0.015 155);
+      --surface:      oklch(0.16 0.014 155);
+      --surface2:     oklch(0.21 0.013 155);
+      --border:       oklch(0.27 0.013 155);
+      --border2:      oklch(0.36 0.010 155);
+      --text:         oklch(0.95 0.005 150);
+      --sub:          oklch(0.64 0.008 150);
+      --faint:        oklch(0.42 0.007 150);
+      --accent:       oklch(0.72 0.10 155);
+      --accent-glow:  oklch(0.72 0.10 155 / 0.16);
+      --gold:         oklch(0.80 0.12 85);
+      --s-high:       oklch(0.70 0.12 155);
+      --s-mid:        oklch(0.78 0.14 55);
+      --s-low:        oklch(0.68 0.16 22);
+      --disc-bg:      oklch(0.19 0.028 155);
+      --disc-text:    oklch(0.76 0.12 155);
+      --over-bg:      oklch(0.18 0.026 22);
+      --over-text:    oklch(0.74 0.14 22);
+      --shadow:       0 2px 6px oklch(0 0 0 / 0.38), 0 10px 26px oklch(0 0 0 / 0.24);
+      --shadow-hover: 0 4px 14px oklch(0 0 0 / 0.50), 0 14px 34px oklch(0 0 0 / 0.30);
+    }
+
+    /* ══════════════════════════════════════════
+       TOPBAR
+    ══════════════════════════════════════════ */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 28px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in oklch, var(--bg) 88%, transparent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+    .app-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 1.15rem; font-weight: 600;
+      color: var(--accent); letter-spacing: -0.01em; transition: color 0.35s;
+    }
+    .app-sub {
+      font-size: 0.58rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.10em; margin-top: 1px;
+      transition: color 0.35s;
+    }
+    .mode-switcher {
+      display: flex; gap: 2px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 3px;
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .mb {
+      border: none; background: none; color: var(--faint);
+      font-family: 'DM Mono', monospace; font-size: 0.68rem;
+      padding: 4px 12px; border-radius: 5px; cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .mb.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+    /* ══════════════════════════════════════════
+       TABS / FILTERS / SUMMARY
+    ══════════════════════════════════════════ */
+    .tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      padding: 0 28px; background: var(--bg);
+      transition: background 0.35s, border-color 0.35s; overflow-x: auto;
+    }
+    .tab {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 0.92rem; color: var(--faint);
+      padding: 10px 14px; border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap; transition: color 0.2s;
+    }
+    .tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .filters {
+      display: flex; gap: 8px; padding: 10px 28px;
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.35s; flex-wrap: wrap;
+    }
+    .fi {
+      font-family: 'DM Mono', monospace; font-size: 0.68rem;
+      color: var(--sub); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 5px 10px; outline: none;
+      flex: 1; min-width: 100px; max-width: 150px;
+      transition: background 0.35s, border-color 0.35s, color 0.35s;
+      pointer-events: none;
+    }
+    .fi::placeholder { color: var(--faint); opacity: 0.8; }
+
+    .summary {
+      display: flex; gap: 8px; padding: 8px 28px;
+      align-items: center; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border); transition: border-color 0.35s;
+    }
+    .sstat {
+      font-size: 0.62rem; color: var(--sub); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 3px 10px; white-space: nowrap;
+      transition: background 0.35s, border-color 0.35s, color 0.35s;
+    }
+    .sstat strong { color: var(--accent); transition: color 0.35s; }
+
+    /* ══════════════════════════════════════════
+       CARD GRID
+    ══════════════════════════════════════════ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 14px; padding: 20px 28px;
+    }
+
+    /* ══════════════════════════════════════════
+       CARD BASE
+    ══════════════════════════════════════════ */
+    .card {
+      position: relative;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 14px 12px;
+      overflow: hidden; cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.35s;
+      animation: cardIn 0.28s ease both;
+    }
+    .card:hover {
+      border-color: var(--sc);
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card:nth-child(1) { animation-delay: 0.04s; }
+    .card:nth-child(2) { animation-delay: 0.09s; }
+    .card:nth-child(3) { animation-delay: 0.14s; }
+    .card:nth-child(4) { animation-delay: 0.19s; }
+    .card:nth-child(5) { animation-delay: 0.24s; }
+    .card:nth-child(6) { animation-delay: 0.29s; }
+    @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+
+    /* Ghost house background */
+    .card-ghost {
+      position: absolute; top: -8px; right: -10px;
+      width: 108px; height: 96px;
+      color: var(--sc); opacity: 0.055;
+      pointer-events: none; user-select: none;
+      transition: color 0.35s;
+    }
+
+    /* ══════════════════════════════════════════
+       HOUSE ICON — score engraved on facade
+    ══════════════════════════════════════════ */
+    .house-icon {
+      width: 56px; height: 50px;
+      color: var(--sc);
+      transition: color 0.35s;
+      flex-shrink: 0;
+      display: block;
+    }
+
+    /* ── Card row 1: house + commune ── */
+    .card-r1 {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; margin-bottom: 5px;
+    }
+    .card-r1-right { text-align: right; }
+    .card-commune {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--sub); text-transform: uppercase;
+      letter-spacing: 0.14em; line-height: 1; transition: color 0.35s;
+    }
+    .card-type { font-size: 0.60rem; color: var(--faint); margin-top: 3px; transition: color 0.35s; }
+
+    .card-rule {
+      width: 28px; height: 1px;
+      background: var(--sc); margin: 4px 0 10px; transition: background 0.35s;
+    }
+
+    /* ── Card row 2: price + FV ── */
+    .card-r2 {
+      display: flex; align-items: baseline;
+      justify-content: space-between; gap: 8px; margin-bottom: 6px;
+    }
+    .card-price {
+      font-family: 'DM Mono', monospace; font-size: 0.96rem; font-weight: 500;
+      color: var(--text); white-space: nowrap; transition: color 0.35s;
+    }
+    .card-fv-wrap { display: flex; align-items: baseline; gap: 4px; }
+    .card-fv-label {
+      font-size: 0.53rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.07em; transition: color 0.35s;
+    }
+    .card-fv-value {
+      font-family: 'DM Mono', monospace; font-size: 0.72rem;
+      color: var(--sub); transition: color 0.35s;
+    }
+    .card-fv-edit {
+      border: none; background: none; color: var(--faint);
+      font-size: 0.70rem; cursor: pointer;
+      padding: 1px 3px; border-radius: 3px; line-height: 1;
+      transition: color 0.15s, background 0.15s;
+      display: inline-flex; align-items: center;
+    }
+    .card-fv-edit:hover { color: var(--accent); background: var(--accent-glow); }
+
+    /* ── Card row 3: vs market ── */
+    .card-r3 { margin-bottom: 10px; }
+    .vs-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 4px;
+      font-size: 0.64rem; font-weight: 500; letter-spacing: 0.01em;
+      transition: background 0.35s, color 0.35s;
+    }
+    .vs-disc { background: var(--disc-bg); color: var(--disc-text); }
+    .vs-over { background: var(--over-bg); color: var(--over-text); }
+
+    /* ── Card row 4: stat strip (default) ── */
+    .card-r4 {
+      display: flex; align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 9px; margin-top: 2px; transition: border-color 0.35s;
+    }
+    .meta-item {
+      display: flex; flex-direction: column;
+      align-items: center; flex: 1; gap: 2px;
+    }
+    .meta-item + .meta-item { border-left: 1px solid var(--border); transition: border-color 0.35s; }
+    .meta-label {
+      font-size: 0.50rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.35s;
+    }
+    .meta-val {
+      font-family: 'DM Mono', monospace; font-size: 0.72rem;
+      font-weight: 500; color: var(--text); transition: color 0.35s;
+    }
+    .meta-val.yh { color: var(--s-high); }
+    .meta-val.ym { color: var(--s-mid); }
+    .meta-val.yl { color: var(--s-low); }
+
+    /* ── Hover actions ── */
+    .card-actions {
+      display: flex; gap: 6px;
+      margin-top: 10px; padding-top: 9px;
+      border-top: 1px solid var(--border);
+      opacity: 0; transform: translateY(4px);
+      transition: opacity 0.18s, transform 0.18s, border-color 0.35s;
+    }
+    .card:hover .card-actions { opacity: 1; transform: translateY(0); }
+    .ca-btn {
+      flex: 1; border: 1px solid var(--border);
+      background: transparent; color: var(--sub);
+      font-family: 'DM Mono', monospace; font-size: 0.62rem;
+      padding: 5px 0; border-radius: 4px; cursor: pointer; text-align: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .ca-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .ca-btn.prim { background: var(--accent-glow); border-color: var(--sc); color: var(--sc); }
+    .ca-btn.prim:hover { background: color-mix(in oklch, var(--sc) 18%, transparent); }
+
+    /* ── Score color helpers ── */
+    .sh { --sc: var(--s-high); }
+    .sm { --sc: var(--s-mid);  }
+    .sl { --sc: var(--s-low);  }
+
+    /* ══════════════════════════════════════════
+       COMPARISON SECTION
+    ══════════════════════════════════════════ */
+    .comp-header {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 28px 28px 10px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px; transition: border-color 0.35s;
+    }
+    .comp-title {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 1.05rem; font-weight: 600; color: var(--accent);
+      transition: color 0.35s;
+    }
+    .comp-sub { font-size: 0.60rem; color: var(--faint); transition: color 0.35s; }
+
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px; padding: 0 28px 32px;
+      overflow-x: auto;
+    }
+    @media (max-width: 900px) {
+      .comp-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Piste tag badge */
+    .piste-tag {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 0.54rem; color: var(--sc);
+      border: 1px solid var(--sc); border-radius: 3px;
+      padding: 2px 7px; opacity: 0.75; transition: color 0.35s, border-color 0.35s;
+      white-space: nowrap; pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════
+       PISTE A — GAUGE ROWS
+    ══════════════════════════════════════════ */
+    .stat-a {
+      border-top: 1px solid var(--border);
+      padding-top: 10px; margin-top: 2px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: border-color 0.35s;
+    }
+    .ga-row { display: flex; flex-direction: column; gap: 3px; }
+    .ga-top { display: flex; justify-content: space-between; align-items: baseline; }
+    .ga-label {
+      font-size: 0.52rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.35s;
+    }
+    .ga-val {
+      font-family: 'DM Mono', monospace; font-size: 0.70rem;
+      font-weight: 500; color: var(--text); transition: color 0.35s;
+    }
+    .ga-val.gh { color: var(--s-high); }
+    .ga-val.gm { color: var(--s-mid); }
+    .ga-track {
+      height: 3px; border-radius: 2px;
+      background: color-mix(in oklch, var(--text) 8%, transparent);
+      overflow: hidden;
+    }
+    .ga-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(.22,.68,0,1.2), background 0.35s; }
+    .ga-fill.neutral { background: var(--faint); }
+    .ga-fill.good    { background: var(--s-high); }
+    .ga-fill.mid     { background: var(--s-mid); }
+
+    /* ══════════════════════════════════════════
+       PISTE B — ICON BADGES
+    ══════════════════════════════════════════ */
+    .stat-b {
+      border-top: 1px solid var(--border);
+      padding-top: 10px; margin-top: 2px;
+      display: flex; justify-content: space-around; align-items: center;
+      transition: border-color 0.35s;
+    }
+    .ib-badge {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .ib-icon {
+      color: var(--sc); transition: color 0.35s;
+    }
+    .ib-label {
+      font-size: 0.48rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      transition: color 0.35s;
+    }
+
+    /* ══════════════════════════════════════════
+       PISTE C — ALPINE ICONS
+    ══════════════════════════════════════════ */
+    .stat-c {
+      border-top: 1px solid var(--border);
+      padding-top: 10px; margin-top: 2px;
+      display: flex; justify-content: space-around; align-items: flex-end;
+      transition: border-color 0.35s;
+    }
+    .alp-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .alp-icon { color: var(--sc); transition: color 0.35s; }
+    .alp-label {
+      font-size: 0.48rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.07em; transition: color 0.35s;
+    }
+
+    /* ══════════════════════════════════════════
+       PISTE D — RADAR TRIANGLE
+    ══════════════════════════════════════════ */
+    .stat-d {
+      border-top: 1px solid var(--border);
+      padding-top: 10px; margin-top: 2px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      transition: border-color 0.35s;
+    }
+    .radar-svg { color: var(--sc); transition: color 0.35s; }
+    .radar-legend {
+      display: flex; justify-content: space-between; width: 100%;
+      padding: 0 2px;
+    }
+    .rl-item {
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .rl-val {
+      font-family: 'DM Mono', monospace; font-size: 0.64rem;
+      font-weight: 500; color: var(--sc); transition: color 0.35s;
+    }
+    .rl-label {
+      font-size: 0.46rem; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.07em; transition: color 0.35s;
+    }
+
+    /* ══════════════════════════════════════════
+       FAIR VALUE MODAL
+    ══════════════════════════════════════════ */
+    .fv-modal {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      align-items: center; justify-content: center;
+      background: oklch(0 0 0 / 0.45); backdrop-filter: blur(5px);
+    }
+    .fv-modal.open { display: flex; }
+    .fv-box {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 24px 22px; width: 320px;
+      box-shadow: var(--shadow-hover); animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(6px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .fv-title {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 1.12rem; font-weight: 600; color: var(--text); margin-bottom: 3px;
+    }
+    .fv-sub { font-size: 0.60rem; color: var(--faint); margin-bottom: 18px; }
+    .fv-row { margin-bottom: 12px; }
+    .fv-lbl {
+      font-size: 0.58rem; color: var(--sub);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
+    }
+    .fv-inp {
+      width: 100%; font-family: 'DM Mono', monospace; font-size: 0.82rem;
+      color: var(--text); background: var(--bg);
+      border: 1px solid var(--border2); border-radius: 6px;
+      padding: 7px 10px; outline: none;
+      transition: border-color 0.15s, background 0.35s, color 0.35s;
+    }
+    .fv-inp:focus { border-color: var(--accent); }
+    .fv-hint { font-size: 0.57rem; color: var(--faint); margin-top: 4px; }
+    .fv-actions { display: flex; gap: 8px; margin-top: 18px; }
+    .fv-cancel {
+      flex: 1; border: 1px solid var(--border); background: none;
+      color: var(--sub); font-family: 'DM Mono', monospace; font-size: 0.72rem;
+      padding: 8px; border-radius: 6px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .fv-save {
+      flex: 2; border: none; background: var(--accent);
+      color: var(--bg); font-family: 'DM Mono', monospace;
+      font-size: 0.72rem; font-weight: 500; padding: 8px;
+      border-radius: 6px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .fv-save:hover { opacity: 0.85; }
+  </style>
+</head>
+<body class="light">
+
+  <!-- ══ Topbar ══ -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.2" fill="none"/>
+        <circle cx="12" cy="12" r="5.5" stroke="var(--accent)" stroke-width="0.7" fill="none" opacity="0.4"/>
+        <circle cx="12" cy="12" r="2" fill="var(--gold)"/>
+      </svg>
+      <div>
+        <div class="app-title">Appart Alert</div>
+        <div class="app-sub">Chamonix · Argentière · Les Houches</div>
+      </div>
+    </div>
+    <div class="mode-switcher">
+      <button class="mb on" onclick="setTheme('light',this)">Light</button>
+      <button class="mb"    onclick="setTheme('dusk',this)">Dusk</button>
+      <button class="mb"    onclick="setTheme('dark',this)">Dark</button>
+    </div>
+  </div>
+
+  <!-- ══ Tabs ══ -->
+  <nav class="tabs">
+    <span class="tab on">Appartements</span>
+    <span class="tab">Maisons</span>
+    <span class="tab">Insights</span>
+    <span class="tab">Comparateur</span>
+    <span class="tab">Simulation</span>
+  </nav>
+
+  <!-- ══ Filters ══ -->
+  <div class="filters">
+    <input class="fi" placeholder="Rechercher…">
+    <input class="fi" placeholder="Score min">
+    <input class="fi" placeholder="Prix max €">
+    <input class="fi" placeholder="Surface min m²">
+    <input class="fi" placeholder="Rendement min %">
+  </div>
+
+  <!-- ══ Summary ══ -->
+  <div class="summary">
+    <span class="sstat"><strong>6</strong> annonces</span>
+    <span class="sstat">score moy. <strong>68</strong></span>
+    <span class="sstat">prix moy. <strong>344 k€</strong></span>
+    <span class="sstat">rdt. moy. <strong>5.2%</strong></span>
+    <span class="sstat"><strong>4</strong> sous marché</span>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       MAIN CARD GRID
+       House icons: score engraved between the two windows
+  ══════════════════════════════════════════════════════ -->
+  <div class="card-grid">
+
+    <!-- ─── Card 1 — Studio Argentière 91 — GOOD ─── -->
+    <div class="card sh">
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <!-- GOOD house: clean roof, chimney, windows, arched door, score between windows -->
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <!-- Left window -->
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Right window -->
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Score engraved on facade, between windows -->
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">91</text>
+          <!-- Door -->
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Argentière</div>
+          <div class="card-type">Studio · T1</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">198 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">210 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Argentière · Studio','210000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −5.7% sous marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">28 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">7 071 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val yh">7.8%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+    <!-- ─── Card 2 — T3 Les Houches 82 — GOOD ─── -->
+    <div class="card sh">
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">82</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Les Houches</div>
+          <div class="card-type">T3 · 3 pièces</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">320 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">345 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Les Houches · T3','345000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −7.2% sous marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">58 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">5 517 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val yh">5.4%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+    <!-- ─── Card 3 — T2 Chamonix 67 — MEDIUM ─── -->
+    <div class="card sm">
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 22 L50 46 L2 46 L2 20 Z"/>
+      </svg>
+      <div class="card-r1">
+        <!-- MED house: asymmetric roof, cracked window, wall crack -->
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <polyline points="26,4 49,22 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Window crack -->
+          <line x1="6" y1="23" x2="14" y2="29" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.2,0.5"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">67</text>
+          <rect x="21" y="34" width="10" height="12" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="29" cy="40" r="1.0" fill="currentColor" stroke="none"/>
+          <!-- Wall crack -->
+          <polyline points="38,29 39.5,33 37,37 38.5,42" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Chamonix</div>
+          <div class="card-type">T2 · 2 pièces</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">485 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">460 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Chamonix · T2','460000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-over">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 8V2M2 4l3-3 3 3"/></svg>
+          +5.4% au-dessus marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">42 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">11 548 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val ym">3.6%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+    <!-- ─── Card 4 — T4 Saint-Gervais 44 — RUINED ─── -->
+    <div class="card sl">
+      <!-- Ghost: jagged silhouette matching ruined house -->
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M3,24 L12,17 L17,21 L22,14 L26,16 L30,11 L34,21 L38,17 L43,23 L48,46 L4,46 Z"/>
+      </svg>
+      <div class="card-r1">
+        <!-- RUINED house: jagged roof, broken walls, X windows, score low on wall -->
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <polyline points="3,23 12,16 17,20 22,13 26,15 30,10 34,20 38,16 43,22" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <polyline points="4,28 4,46 17,46" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <polyline points="48,23 48,46 23,46" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="4" y1="23" x2="4" y2="28" stroke="currentColor" stroke-width="1.0" stroke-dasharray="2,1.5" stroke-linecap="round"/>
+          <!-- Left window broken X -->
+          <rect x="7"  y="27" width="9" height="7" stroke="currentColor" stroke-width="1.0"/>
+          <line x1="7"  y1="27" x2="16" y2="34" stroke="currentColor" stroke-width="0.9"/>
+          <line x1="16" y1="27" x2="7"  y2="34" stroke="currentColor" stroke-width="0.9"/>
+          <!-- Right window broken X -->
+          <rect x="33" y="27" width="9" height="7" stroke="currentColor" stroke-width="1.0"/>
+          <line x1="33" y1="27" x2="42" y2="34" stroke="currentColor" stroke-width="0.9"/>
+          <line x1="42" y1="27" x2="33" y2="34" stroke="currentColor" stroke-width="0.9"/>
+          <!-- Diagonal crack -->
+          <polyline points="26,23 28,28 25,33 27,39 24,45" stroke="currentColor" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Score on lower right wall section -->
+          <text x="36" y="44" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" font-weight="500" fill="currentColor" opacity="0.75">44</text>
+          <!-- Debris -->
+          <line x1="5" y1="44" x2="10" y2="44" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="12" y1="43" x2="16" y2="45" stroke="currentColor" stroke-width="1.0" stroke-linecap="round"/>
+          <circle cx="19" cy="44.5" r="0.9" fill="currentColor"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Saint-Gervais</div>
+          <div class="card-type">T4 · 4 pièces</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">410 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">388 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Saint-Gervais · T4','388000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-over">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 8V2M2 4l3-3 3 3"/></svg>
+          +5.7% au-dessus marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">89 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">4 607 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val ym">4.1%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+    <!-- ─── Card 5 — T2 Servoz 78 — GOOD ─── -->
+    <div class="card sh">
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">78</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Servoz</div>
+          <div class="card-type">T2 · 2 pièces</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">245 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">268 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Servoz · T2','268000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −8.6% sous marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">38 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">6 447 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val yh">6.2%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+    <!-- ─── Card 6 — T3 Chamonix 55 — MEDIUM ─── -->
+    <div class="card sm">
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 22 L50 46 L2 46 L2 20 Z"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <polyline points="26,4 49,22 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="6" y1="23" x2="14" y2="29" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.2,0.5"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">55</text>
+          <rect x="21" y="34" width="10" height="12" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="29" cy="40" r="1.0" fill="currentColor" stroke="none"/>
+          <polyline points="38,29 39.5,33 37,37 38.5,42" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Chamonix</div>
+          <div class="card-type">T3 · ↘ prix baissé</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">595 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">578 000 €</span>
+          <button class="card-fv-edit" onclick="openFV(event,'Chamonix · T3','578000')">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-over">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 8V2M2 4l3-3 3 3"/></svg>
+          +2.9% au-dessus marché
+        </span>
+      </div>
+      <div class="card-r4">
+        <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-val">61 m²</span></div>
+        <div class="meta-item"><span class="meta-label">Prix/m²</span><span class="meta-val">9 754 €</span></div>
+        <div class="meta-item"><span class="meta-label">Rendement</span><span class="meta-val ym">4.7%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="ca-btn">Rejeter</button>
+        <button class="ca-btn">Voir</button>
+        <button class="ca-btn prim">↗ Ouvrir</button>
+      </div>
+    </div>
+
+  </div><!-- /card-grid -->
+
+  <!-- ══════════════════════════════════════════════════════
+       COMPARISON — 4 PISTES STATS
+       Même bien : Studio · Argentière · 198k€ · Score 91
+  ══════════════════════════════════════════════════════ -->
+  <div class="comp-header">
+    <div class="comp-title">Comparaison · Styles Stats</div>
+    <div class="comp-sub">Studio · Argentière · 198 000 € · Score 91 — 4 traitements, même bien</div>
+  </div>
+  <div class="comp-grid">
+
+    <!-- ══════════════════
+         PISTE A — JAUGES
+         Contexte marché en ligne
+    ══════════════════ -->
+    <div class="card sh" style="animation-delay:0s">
+      <div class="piste-tag">A — Jauges</div>
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">91</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Argentière</div>
+          <div class="card-type">Studio · T1</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">198 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">210 000 €</span>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −5.7% sous marché
+        </span>
+      </div>
+      <!-- STAT A: gauge rows with market context bars -->
+      <div class="stat-a">
+        <div class="ga-row">
+          <div class="ga-top">
+            <span class="ga-label">Surface</span>
+            <span class="ga-val">28 m²</span>
+          </div>
+          <div class="ga-track"><div class="ga-fill neutral" style="width:28%"></div></div>
+        </div>
+        <div class="ga-row">
+          <div class="ga-top">
+            <span class="ga-label">Prix / m²</span>
+            <span class="ga-val gh">7 071 €</span>
+          </div>
+          <!-- 7071 in range 5000-12000: position = (7071-5000)/7000 = 30% → affordabl = green fill -->
+          <div class="ga-track"><div class="ga-fill good" style="width:30%"></div></div>
+        </div>
+        <div class="ga-row">
+          <div class="ga-top">
+            <span class="ga-label">Rendement</span>
+            <span class="ga-val gh">7.8%</span>
+          </div>
+          <!-- 7.8% in range 3-9% : (7.8-3)/6 = 80% -->
+          <div class="ga-track"><div class="ga-fill good" style="width:80%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════
+         PISTE B — ICONS INSCRITES
+         Nombre gravé dans l'icône
+    ══════════════════ -->
+    <div class="card sh" style="animation-delay:0s">
+      <div class="piste-tag">B — Icônes</div>
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">91</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Argentière</div>
+          <div class="card-type">Studio · T1</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">198 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">210 000 €</span>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −5.7% sous marché
+        </span>
+      </div>
+      <!-- STAT B: icon badges, number inside each icon -->
+      <div class="stat-b">
+        <!-- Surface: floor plan outline with "28" inside -->
+        <div class="ib-badge">
+          <svg class="ib-icon" viewBox="0 0 34 34" width="38" height="38" fill="none">
+            <!-- Floor plan outline -->
+            <rect x="4" y="4" width="26" height="26" stroke="currentColor" stroke-width="1.3"/>
+            <!-- Survey corner marks (top-left) -->
+            <line x1="4" y1="10" x2="4" y2="4" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="4" y1="4" x2="10" y2="4" stroke="currentColor" stroke-width="1.6"/>
+            <!-- Survey corner marks (bottom-right) -->
+            <line x1="30" y1="24" x2="30" y2="30" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="24" y1="30" x2="30" y2="30" stroke="currentColor" stroke-width="1.6"/>
+            <!-- Number inside -->
+            <text x="17" y="19" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" font-weight="500" fill="currentColor">28</text>
+            <text x="17" y="27" text-anchor="middle" font-family="DM Mono,monospace" font-size="6" fill="currentColor" opacity="0.55">m²</text>
+          </svg>
+          <span class="ib-label">Surface</span>
+        </div>
+        <!-- Prix/m²: coin circle with value inside -->
+        <div class="ib-badge">
+          <svg class="ib-icon" viewBox="0 0 34 34" width="38" height="38" fill="none">
+            <!-- Coin outer ring -->
+            <circle cx="17" cy="17" r="13" stroke="currentColor" stroke-width="1.3"/>
+            <!-- Inner decorative ring -->
+            <circle cx="17" cy="17" r="10" stroke="currentColor" stroke-width="0.6" opacity="0.3"/>
+            <!-- Value inside — 4 chars at small font -->
+            <text x="17" y="15.5" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" font-weight="500" fill="currentColor">7071</text>
+            <text x="17" y="23" text-anchor="middle" font-family="DM Mono,monospace" font-size="5.5" fill="currentColor" opacity="0.55">€/m²</text>
+          </svg>
+          <span class="ib-label">Prix/m²</span>
+        </div>
+        <!-- Rendement: circular gauge (donut) with value inside -->
+        <div class="ib-badge">
+          <svg class="ib-icon" viewBox="0 0 34 34" width="38" height="38" fill="none">
+            <!-- Background full ring -->
+            <circle cx="17" cy="17" r="12" stroke="currentColor" stroke-width="3" opacity="0.13"/>
+            <!-- Filled arc: 7.8% of range [3,9] = 80% fill = 60.3/75.4px -->
+            <!-- circumference = 2π×12 = 75.4, fill=80% → 60.3px -->
+            <circle cx="17" cy="17" r="12" stroke="currentColor" stroke-width="3"
+              stroke-dasharray="60.3 75.4"
+              stroke-dashoffset="0"
+              transform="rotate(-90 17 17)"
+              stroke-linecap="round"/>
+            <!-- Value inside -->
+            <text x="17" y="15.5" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" font-weight="500" fill="currentColor">7.8</text>
+            <text x="17" y="23.5" text-anchor="middle" font-family="DM Mono,monospace" font-size="6" fill="currentColor" opacity="0.55">%</text>
+          </svg>
+          <span class="ib-label">Rendement</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════
+         PISTE C — ALPINE
+         Métaphores montagne
+    ══════════════════ -->
+    <div class="card sh" style="animation-delay:0s">
+      <div class="piste-tag">C — Alpin</div>
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">91</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Argentière</div>
+          <div class="card-type">Studio · T1</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">198 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">210 000 €</span>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −5.7% sous marché
+        </span>
+      </div>
+      <!-- STAT C: alpine metaphors -->
+      <div class="stat-c">
+        <!-- Surface: cadastral/plot icon -->
+        <div class="alp-item">
+          <svg class="alp-icon" viewBox="0 0 36 36" width="38" height="38" fill="none">
+            <!-- Survey stakes at corners -->
+            <line x1="5" y1="5" x2="5" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="5" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="31" y1="5" x2="31" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="26" y1="5" x2="31" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="5" y1="26" x2="5" y2="31" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="5" y1="31" x2="10" y2="31" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="31" y1="26" x2="31" y2="31" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="26" y1="31" x2="31" y2="31" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Dashed plot boundary -->
+            <rect x="5" y="5" width="26" height="26" stroke="currentColor" stroke-width="0.8" stroke-dasharray="2.5,1.5" fill="none"/>
+            <!-- Number inside -->
+            <text x="18" y="19" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" font-weight="500" fill="currentColor">28</text>
+            <text x="18" y="27" text-anchor="middle" font-family="DM Mono,monospace" font-size="5.5" fill="currentColor" opacity="0.55">m²</text>
+          </svg>
+          <span class="alp-label">Surface</span>
+        </div>
+        <!-- Prix/m²: mountain altitude icon -->
+        <div class="alp-item">
+          <svg class="alp-icon" viewBox="0 0 36 36" width="38" height="38" fill="none">
+            <!-- Mountain triangle -->
+            <polygon points="18,4 33,30 3,30" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/>
+            <!-- Snow cap suggestion -->
+            <polyline points="12,18 18,8 24,18" stroke="currentColor" stroke-width="0.7" fill="none" stroke-linejoin="round" opacity="0.35"/>
+            <!-- Price level line (30% up from base = affordable) -->
+            <line x1="9" y1="22" x2="27" y2="22" stroke="currentColor" stroke-width="0.8" opacity="0.45"/>
+            <!-- Tick ends of level line -->
+            <line x1="9"  y1="20" x2="9"  y2="24" stroke="currentColor" stroke-width="0.8" opacity="0.45"/>
+            <line x1="27" y1="20" x2="27" y2="24" stroke="currentColor" stroke-width="0.8" opacity="0.45"/>
+            <!-- Price at level line -->
+            <text x="18" y="20.5" text-anchor="middle" font-family="DM Mono,monospace" font-size="6.5" font-weight="500" fill="currentColor">7071</text>
+            <text x="18" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="5" fill="currentColor" opacity="0.55">€/m²</text>
+          </svg>
+          <span class="alp-label">Prix/m²</span>
+        </div>
+        <!-- Rendement: slope gradient icon -->
+        <div class="alp-item">
+          <svg class="alp-icon" viewBox="0 0 36 36" width="38" height="38" fill="none">
+            <!-- Ground baseline -->
+            <line x1="3" y1="30" x2="33" y2="30" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.25"/>
+            <!-- Vertical guide (dashed) -->
+            <line x1="28" y1="8" x2="28" y2="30" stroke="currentColor" stroke-width="0.7" stroke-dasharray="1.5,1.5" opacity="0.28"/>
+            <!-- Slope line (steep = high yield) -->
+            <line x1="4" y1="30" x2="28" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- Angle arc at base -->
+            <path d="M16,30 A12,12 0 0 0 12,19.5" stroke="currentColor" stroke-width="1.0" fill="none" stroke-linecap="round"/>
+            <!-- Dot at slope start -->
+            <circle cx="4" cy="30" r="1.8" fill="currentColor" stroke="none"/>
+            <!-- % inside angle zone -->
+            <text x="18" y="28" text-anchor="middle" font-family="DM Mono,monospace" font-size="7.5" font-weight="500" fill="currentColor">7.8%</text>
+          </svg>
+          <span class="alp-label">Rendement</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════
+         PISTE D — RADAR TRIANGLE
+         Empreinte graphique des 3 métriques
+    ══════════════════ -->
+    <div class="card sh" style="animation-delay:0s">
+      <div class="piste-tag">D — Radar</div>
+      <svg class="card-ghost" viewBox="0 0 52 46" fill="currentColor">
+        <path d="M26 2 L50 19 L50 46 L2 46 L2 19 Z"/>
+        <rect x="31" y="9" width="6" height="10"/>
+      </svg>
+      <div class="card-r1">
+        <svg class="house-icon" viewBox="0 0 52 46" fill="none">
+          <rect x="31" y="8" width="5.5" height="11" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M31.5,8 Q34,5 36.5,8" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+          <polyline points="26,4 49,20 3,20" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="4" y="20" width="44" height="26" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="5" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="10" y1="22" x2="10" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="5"  y1="26" x2="15" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <rect x="37" y="22" width="10" height="8" stroke="currentColor" stroke-width="1.1"/>
+          <line x1="42" y1="22" x2="42" y2="30" stroke="currentColor" stroke-width="0.8"/>
+          <line x1="37" y1="26" x2="47" y2="26" stroke="currentColor" stroke-width="0.8"/>
+          <text x="26" y="29" text-anchor="middle" font-family="DM Mono,monospace" font-size="8.5" font-weight="500" fill="currentColor" opacity="0.80">91</text>
+          <path d="M21,46 L21,36 A5,4.5 0 0 1 31,36 L31,46" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="29.5" cy="41" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="card-r1-right">
+          <div class="card-commune">Argentière</div>
+          <div class="card-type">Studio · T1</div>
+        </div>
+      </div>
+      <div class="card-rule"></div>
+      <div class="card-r2">
+        <div class="card-price">198 000 €</div>
+        <div class="card-fv-wrap">
+          <span class="card-fv-label">FV</span>
+          <span class="card-fv-value">210 000 €</span>
+        </div>
+      </div>
+      <div class="card-r3">
+        <span class="vs-badge vs-disc">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 2v6M2 6l3 3 3-3"/></svg>
+          −5.7% sous marché
+        </span>
+      </div>
+      <!-- STAT D: triangle radar -->
+      <div class="stat-d">
+        <!--
+          3 axes (equilateral, center 40,40 radius 26):
+          Top   = rendement  → (40, 14)
+          BR    = surface    → (40+22.5, 40+13) = (62.5, 53)
+          BL    = prix/m²    → (40-22.5, 40+13) = (17.5, 53)
+
+          Normalized:
+          rendement 7.8%: range [3,9] → (7.8-3)/6 = 0.80 → pt (40, 14+0.80*(40-14)) = (40,14+0*0.8)
+          Wait, let me redo: pt = center + normalized * (axis_end - center)
+          center = (40, 40)
+          rendement axis_end = (40, 14), so (axis-center) = (0, -26)
+          → pt = (40 + 0.80*0, 40 + 0.80*(-26)) = (40, 40-20.8) = (40, 19.2)
+
+          surface 28m²: range [15,80] → (28-15)/65 = 0.20
+          surface axis_end = (62.5, 53), (axis-center) = (22.5, 13)
+          → pt = (40 + 0.20*22.5, 40 + 0.20*13) = (40+4.5, 40+2.6) = (44.5, 42.6)
+
+          prix/m² 7071: range [5000,12000], inverted (lower=better) → (12000-7071)/7000 = 0.70
+          prix axis_end = (17.5, 53), (axis-center) = (-22.5, 13)
+          → pt = (40 + 0.70*(-22.5), 40 + 0.70*13) = (40-15.75, 40+9.1) = (24.25, 49.1)
+        -->
+        <svg class="radar-svg" viewBox="0 0 80 68" width="120" height="100" fill="none">
+          <!-- Grid: 33%, 66%, 100% triangles -->
+          <polygon points="40,14 62.5,53 17.5,53" stroke="currentColor" stroke-width="0.5" opacity="0.15"/>
+          <polygon points="40,23.3 55.2,48.7 24.8,48.7" stroke="currentColor" stroke-width="0.5" opacity="0.10"/>
+          <polygon points="40,31.6 47.8,44.3 32.2,44.3" stroke="currentColor" stroke-width="0.5" opacity="0.07"/>
+          <!-- Axis lines (from center) -->
+          <line x1="40" y1="40" x2="40"   y2="14"   stroke="currentColor" stroke-width="0.6" opacity="0.18"/>
+          <line x1="40" y1="40" x2="62.5" y2="53"   stroke="currentColor" stroke-width="0.6" opacity="0.18"/>
+          <line x1="40" y1="40" x2="17.5" y2="53"   stroke="currentColor" stroke-width="0.6" opacity="0.18"/>
+          <!-- Data polygon (filled) -->
+          <polygon points="40,19.2 44.5,42.6 24.25,49.1"
+            stroke="currentColor" stroke-width="1.3"
+            fill="currentColor" fill-opacity="0.14"/>
+          <!-- Data points -->
+          <circle cx="40"    cy="19.2" r="2.2" fill="currentColor"/>
+          <circle cx="44.5"  cy="42.6" r="2.2" fill="currentColor"/>
+          <circle cx="24.25" cy="49.1" r="2.2" fill="currentColor"/>
+          <!-- Axis value labels -->
+          <text x="40"   y="10"   text-anchor="middle" font-family="DM Mono,monospace" font-size="6.5" font-weight="500" fill="currentColor">7.8%</text>
+          <text x="40"   y="16.2" text-anchor="middle" font-family="DM Mono,monospace" font-size="5"   fill="currentColor" opacity="0.45">rdt</text>
+          <text x="66.5" y="57"   text-anchor="start"  font-family="DM Mono,monospace" font-size="6.5" font-weight="500" fill="currentColor">28m²</text>
+          <text x="66.5" y="63"   text-anchor="start"  font-family="DM Mono,monospace" font-size="5"   fill="currentColor" opacity="0.45">surf</text>
+          <text x="13.5" y="57"   text-anchor="end"    font-family="DM Mono,monospace" font-size="6.5" font-weight="500" fill="currentColor">7k€</text>
+          <text x="13.5" y="63"   text-anchor="end"    font-family="DM Mono,monospace" font-size="5"   fill="currentColor" opacity="0.45">prix</text>
+        </svg>
+        <!-- Compact legend below radar -->
+        <div class="radar-legend">
+          <div class="rl-item">
+            <span class="rl-val">7.8%</span>
+            <span class="rl-label">rdt</span>
+          </div>
+          <div class="rl-item">
+            <span class="rl-val">28 m²</span>
+            <span class="rl-label">surface</span>
+          </div>
+          <div class="rl-item">
+            <span class="rl-val">7k€</span>
+            <span class="rl-label">prix/m²</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /comp-grid -->
+
+  <!-- ══ Fair Value Edit Modal ══ -->
+  <div class="fv-modal" id="fvModal" onclick="closeFVOnBg(event)">
+    <div class="fv-box">
+      <div class="fv-title">Affiner la Fair Value</div>
+      <div class="fv-sub" id="fvSub">—</div>
+      <div class="fv-row">
+        <div class="fv-lbl">Fair Value estimée (€)</div>
+        <input class="fv-inp" type="number" id="fvInput" placeholder="ex: 210000">
+        <div class="fv-hint">Valeur de marché estimée — recalcule le % discount/premium à la volée</div>
+      </div>
+      <div class="fv-row">
+        <div class="fv-lbl">Source</div>
+        <input class="fv-inp" type="text" placeholder="ex: DVF commune, estimation agence…">
+      </div>
+      <div class="fv-actions">
+        <button class="fv-cancel" onclick="closeFV()">Annuler</button>
+        <button class="fv-save"   onclick="closeFV()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setTheme(mode, btn) {
+      document.body.className = mode;
+      document.querySelectorAll('.mb').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+    }
+    function openFV(e, label, value) {
+      e.stopPropagation();
+      document.getElementById('fvSub').textContent = label;
+      document.getElementById('fvInput').value = value;
+      document.getElementById('fvModal').classList.add('open');
+    }
+    function closeFV() { document.getElementById('fvModal').classList.remove('open'); }
+    function closeFVOnBg(e) {
+      if (e.target === document.getElementById('fvModal')) closeFV();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+requests
+beautifulsoup4
+python-dotenv
+pandas
+numpy
+scikit-learn
+xgboost
+joblib
+plotly
+playwright
+nodriver
+browser-cookie3
