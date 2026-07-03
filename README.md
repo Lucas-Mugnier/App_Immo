@@ -1,42 +1,23 @@
 # Immo Radar
 
-Outil personnel d'analyse d'investissement immobilier dans la vallée de Chamonix : collecte automatique des annonces, modèle de valorisation (AVM) entraîné sur les transactions réelles, et dashboard d'aide à la décision.
+Je cherchais un appartement dans la vallée de Chamonix, alors j'ai fini par automatiser la recherche. Un bot lit mes alertes email immobilières, en extrait prix, surface, commune et DPE, estime une fair value à partir des transactions réelles (données DVF publiques), score chaque annonce et génère un dashboard pour tout comparer.
 
-## Ce que ça fait
+Concrètement :
 
-1. **Collecte** — un bot lit les emails d'alertes immobilières (IMAP) et en extrait prix, surface, commune, DPE, caractéristiques. Un scraper complémentaire peut enrichir les fiches des annonces prometteuses.
-2. **Valorisation** — un modèle AVM (régression + XGBoost, entraîné sur les données publiques DVF de transactions) estime une *fair value* par bien et par commune. L'écart entre prix affiché et fair value fait ressortir les biens décotés.
-3. **Scoring** — chaque annonce reçoit un score combinant rendement locatif estimé, décote à l'achat, potentiel de la commune et risques (DPE F/G, travaux, charges).
-4. **Dashboard** — interface de suivi (version HTML générée + version React) : tri, filtres, insights par commune, estimateur interactif, simulateur de rendement à 20 ans avec revalorisation.
-
-## Structure
-
-```
-bot.py / bot_overnight.py      Collecte des emails + scoring + génération du dashboard
-scraper.py                     Enrichissement des annonces (Playwright / nodriver)
-dvf_pipeline.py, dvf_model.py  Pipeline DVF -> features -> modèle de valorisation
-build_avm_*.py, predict_avm.py Construction et application de l'AVM par segment
-dashboard-react/               Dashboard React (Vite)
-tools/                         Scripts one-shot d'itération sur le dashboard
-config.example.json            Critères de recherche, communes, stratégie de scoring
-.env.example                   Identifiants (jamais versionnés)
-```
+- `bot.py` lit la boîte mail (IMAP), parse les annonces et alimente une base SQLite ; `scraper.py` peut enrichir les fiches des annonces prometteuses
+- le modèle de valorisation (régression + XGBoost entraîné sur les données DVF, pipeline dans `dvf_pipeline.py` et `dvf_model.py`) estime une fair value par bien et par commune — l'écart avec le prix affiché fait ressortir les biens décotés
+- le score combine rendement locatif estimé, décote à l'achat, potentiel de la commune et risques (DPE F/G, travaux, charges)
+- le dashboard (HTML généré, plus une version React dans `dashboard-react/`) permet de trier et filtrer, avec insights par commune, estimateur interactif et simulateur de rendement à 20 ans
 
 ## Installation
 
-```bash
-pip install -r requirements.txt
-cp .env.example .env          # remplir ses identifiants
-cp config.example.json config.json
-python bot.py --config config.json --env .env
-```
+    pip install -r requirements.txt
+    cp .env.example .env                    # remplir ses identifiants mail
+    cp config.example.json config.json      # critères de recherche
+    python bot.py --config config.json --env .env
 
-Les données DVF (transactions immobilières publiques, data.gouv.fr) sont à télécharger séparément dans `dvf/` — voir `dvf_pipeline.py`.
-
-## Stack
-
-Python (pandas, scikit-learn, XGBoost), SQLite, Playwright, React/Vite, Plotly.
+Les données DVF (transactions immobilières publiques, data.gouv.fr) sont à télécharger séparément dans `dvf/` — voir `dvf_pipeline.py`. Les scripts dans `tools/` sont des one-shots qui retravaillent le dashboard généré.
 
 ## Note
 
-Projet personnel d'apprentissage. Les données collectées restent locales (SQLite) ; aucune donnée d'annonce n'est redistribuée dans ce dépôt.
+Les données collectées restent locales (SQLite). Aucune donnée d'annonce n'est redistribuée dans ce dépôt.
