@@ -37,6 +37,8 @@ export interface Listing {
   nb_baisses?: number
   photos?: string[]
   is_structured?: boolean
+  avm_suspect?: boolean
+  description?: string
   // runtime state
   _seen?: boolean
   _rejected?: boolean
@@ -69,6 +71,7 @@ export interface Maison {
   description?: string
   needs_renovation?: boolean
   is_structured?: boolean
+  avm_suspect?: boolean
   yield?: number | null
   avm_model?: 'chamonix_apt' | 'vallee_apt' | null
   // runtime state
@@ -171,6 +174,7 @@ export interface SimParams {
   fraisNotaireP: number
   indexLoyer: number
   indexPrix: number
+  vacanceP: number
   revente: number
   planRevente: boolean
   objectif: SimObjectif

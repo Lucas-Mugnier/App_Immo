@@ -1,15 +1,21 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Session } from '@supabase/supabase-js'
 import type {
   TabId, BienType, AppartFilters, MaisonFilters, SortState,
   InsightType, MapMetric, EstimateurState, WatchlistStatus, WatchlistEntry, InvestProfile,
   FiscalMode, SimObjectif, SimParams,
 } from '@/types'
 import type { ProfilAcquisition } from '@/lib/optimizer'
+import { ADMIN_EMAIL } from '@/lib/supabase'
 
 const STORAGE_KEY = 'appart-alert-state'
 
 interface StoreState {
+  // Auth session (not persisted — supabase-js already persists its own session)
+  session: Session | null
+  setSession: (s: Session | null) => void
+
   // Theme
   dark: boolean
   setDark: (d: boolean) => void
@@ -140,6 +146,9 @@ const defaultEstimateur: EstimateurState = {
 export const useStore = create<StoreState>()(
   persist(
     (set) => ({
+      session: null,
+      setSession: (s) => set({ session: s }),
+
       dark: localStorage.getItem('alpestate-theme') === 'dark',
       setDark: (d) => set({ dark: d }),
 
@@ -233,7 +242,7 @@ export const useStore = create<StoreState>()(
         tmi: 30, taux: 3.5, duree: 20,
         loyer: 1500, chargesAn: 2400, apportEur: 80_000,
         fraisNotaireP: 7.5,
-        indexLoyer: 2, indexPrix: 3,
+        indexLoyer: 2, indexPrix: 3, vacanceP: 4,
         revente: 10, planRevente: true,
         objectif: 'tri' as SimObjectif,
       },
@@ -250,6 +259,8 @@ export const useStore = create<StoreState>()(
     {
       name: STORAGE_KEY,
       partialize: (state) => ({
+        // session intentionally excluded — supabase-js persists its own session separately
+        dark: state.dark,
         seen: state.seen,
         rejected: state.rejected,
         hidden: state.hidden,
@@ -267,3 +278,6 @@ export const useStore = create<StoreState>()(
     }
   )
 )
+
+export const useIsAdmin = () =>
+  useStore((s) => !!s.session?.user.email && s.session.user.email === ADMIN_EMAIL)

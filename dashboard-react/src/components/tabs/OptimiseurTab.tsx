@@ -535,6 +535,7 @@ export function OptimiseurTab() {
     fraisNotaireP: 7.5,
     indexLoyer: 2,
     indexPrix: 3,
+    vacanceP: 0.04,
     salaireNet: storeSalaireNet,
     dettesExistantes: storeDettes,
   })

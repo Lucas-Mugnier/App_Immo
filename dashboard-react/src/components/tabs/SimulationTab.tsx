@@ -169,7 +169,7 @@ export function SimulationTab() {
   const { simPreselect, setSimPreselect, simParams, setSimParams } = useStore()
   const {
     selectedId, mode, tmi, taux, duree, loyer, chargesAn, apportEur,
-    fraisNotaireP, indexLoyer, indexPrix, revente, planRevente, objectif,
+    fraisNotaireP, indexLoyer, indexPrix, vacanceP, revente, planRevente, objectif,
   } = simParams
   const sp = useCallback((p: Partial<SimParams>) => setSimParams(p), [setSimParams])
 
@@ -211,9 +211,9 @@ export function SimulationTab() {
       prix: bien.price, apportEur, loyer, chargesAn,
       taux, duree, indexLoyer, indexPrix, tmi,
       dureeRevente: planRevente ? revente : 0,
-      mode, fraisNotaireP,
+      mode, fraisNotaireP, vacanceP: vacanceP / 100,
     })
-  }, [bien, apportEur, loyer, chargesAn, taux, duree, indexLoyer, indexPrix, tmi, revente, planRevente, mode, fraisNotaireP])
+  }, [bien, apportEur, loyer, chargesAn, taux, duree, indexLoyer, indexPrix, vacanceP, tmi, revente, planRevente, mode, fraisNotaireP])
 
   const tri = useMemo(() =>
     (bien && planRevente) ? computeTRI(apportEur, bien.price, fraisNotaireP, proj, revente) : null,
@@ -221,7 +221,7 @@ export function SimulationTab() {
 
   const handleApportOptimal = useCallback(() => {
     if (!bien) return
-    const a = findApportOptimal(bien.price, fraisNotaireP, loyer, chargesAn, taux, duree, tmi, mode)
+    const a = findApportOptimal(bien.price, fraisNotaireP, loyer, chargesAn, taux, duree, tmi, mode, vacanceP / 100)
     sp({ apportEur: a })
   }, [bien, fraisNotaireP, loyer, chargesAn, taux, duree, tmi, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -380,6 +380,8 @@ export function SimulationTab() {
               format={(v) => `+${v} %/an`} onChange={(v) => sp({ indexLoyer: v })} />
             <SimSlider label="Revalorisation prix" value={indexPrix} min={0} max={8} step={0.5}
               format={(v) => `+${v} %/an`} onChange={(v) => sp({ indexPrix: v })} />
+            <SimSlider label="Vacance locative" value={vacanceP} min={0} max={20} step={1}
+              format={(v) => v === 0 ? 'Aucune' : `${v} %/an`} onChange={(v) => sp({ vacanceP: v })} />
             <div className="sim-revente-header">
               <span className="sim-field-label">Scénario de revente</span>
               <div className="sim-revente-toggle">

@@ -47,6 +47,7 @@ export interface BienRow {
   charges?: number | null
   is_relisted?: boolean
   relisted_after_days?: number | null
+  avm_suspect?: boolean
   avm_model?: 'chamonix_apt' | 'vallee_apt' | null
   _appart_id?: string
   _maison_id?: number
@@ -176,7 +177,13 @@ function BienCard({ row, onOpen }: { row: BienRow; onOpen: (r: BienRow) => void 
       )}
       {/* Photo */}
       {row.photos.length > 0 ? (
-        <img src={row.photos[0]} alt="" className="deal-card-img" />
+        row.url ? (
+          <a href={row.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+            <img src={row.photos[0]} alt="" className="deal-card-img" />
+          </a>
+        ) : (
+          <img src={row.photos[0]} alt="" className="deal-card-img" />
+        )
       ) : (
         <div className="deal-card-img-placeholder">
           {row._type === 'appart' ? <Building2 size={28} /> : <Home size={28} />}
@@ -389,7 +396,9 @@ export function BiensTab() {
           charges: r.charges,
           is_relisted: r.is_relisted,
           relisted_after_days: r.relisted_after_days,
+          avm_suspect: !!r.avm_suspect,
           avm_model: r.avm_model,
+          description: r.description,
           _appart_id: r.id,
           _appart_surface: r.surface,
           _appart_rooms: r.rooms,
@@ -421,6 +430,7 @@ export function BiensTab() {
           price_history: m.historique_prix ?? [],
           description: m.description,
           nb_baisses: m.nb_baisses,
+          avm_suspect: !!m.avm_suspect,
           avm_model: m.avm_model,
           _maison_id: m.id,
           _appart_location: m.neighbourhood,
@@ -468,7 +478,7 @@ export function BiensTab() {
     const medPm2 = pm2s.length ? pm2s.sort((a, b) => a - b)[Math.floor(pm2s.length / 2)] : null
     const scores = active.map((r) => r.score).filter((s) => s != null) as number[]
     const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
-    const bonnes = active.filter((r) => (r.avm_ratio ?? 0) >= 1.1).length
+    const bonnes = active.filter((r) => (r.avm_ratio ?? 2) <= 0.90).length
     const fresh = active.filter((r) => daysAgo(r.first_seen) <= 7).length
     return { n: active.length, total: allRows.length, medPm2, avgScore, bonnes, fresh }
   }, [sorted, rejected, allRows.length])

@@ -203,6 +203,7 @@ export interface OptimParams {
   fraisNotaireP: number
   indexLoyer: number
   indexPrix: number
+  vacanceP: number
   salaireNet: number       // revenu mensuel net
   dettesExistantes: number // mensualités de crédit existantes
 }
@@ -285,11 +286,11 @@ export function optimiseBien(
   }
 
   // ── Modes locatif / valeur / mixte / marchand ──────────────────────────────
-  const { taux, duree, tmi, fraisNotaireP, indexLoyer, indexPrix } = params
+  const { taux, duree, tmi, fraisNotaireP, indexLoyer, indexPrix, vacanceP } = params
   const loyer     = loyerFor(bien)
   const chargesAn = chargesFor(bien)
   const apport    = Math.min(params.apportEur, bien.price)
-  const base      = { prix: bien.price, loyer, chargesAn, taux, duree, indexLoyer, indexPrix, tmi, fraisNotaireP }
+  const base      = { prix: bien.price, loyer, chargesAn, taux, duree, indexLoyer, indexPrix, tmi, fraisNotaireP, vacanceP }
 
   // 1 — meilleur mode fiscal (sur apport ref)
   let optMode: FiscalMode = 'lmnp_reel'
@@ -426,6 +427,7 @@ export function computeSensitivity(
         prix: bien.price, apportEur, loyer, chargesAn,
         taux, duree, tmi, fraisNotaireP, mode: optMode,
         indexLoyer, indexPrix, dureeRevente: optRevente,
+        vacanceP: params.vacanceP,
       })
       const tri  = computeTRI(apportEur, bien.price, fraisNotaireP, proj, optRevente)
       const van5 = computeVAN(apportEur, bien.price, fraisNotaireP, proj, optRevente, 0.05)

@@ -896,6 +896,7 @@ export function AnalyseTab() {
     fraisNotaireP: simParams.fraisNotaireP,
     indexLoyer: simParams.indexLoyer,
     indexPrix: simParams.indexPrix,
+    vacanceP: (simParams.vacanceP ?? 4) / 100,
     salaireNet: storeSalaireNet,
     dettesExistantes: storeDettes,
   })
@@ -1018,6 +1019,7 @@ export function AnalyseTab() {
       indexLoyer: params.indexLoyer, indexPrix: params.indexPrix,
       tmi: params.tmi, dureeRevente: revente,
       mode: simOverrides.mode, fraisNotaireP: params.fraisNotaireP,
+      vacanceP: params.vacanceP,
     })
     const tri  = computeTRI(apportEff, selected.bien.price, params.fraisNotaireP, rows, revente)
     const van5 = computeVAN(apportEff, selected.bien.price, params.fraisNotaireP, rows, revente, 0.05)
@@ -1256,9 +1258,14 @@ export function AnalyseTab() {
           <button className="opt-run-btn" onClick={() => runAnalysis()} disabled={running}>
             {running
               ? <span>Calcul en cours…</span>
-              : <><Zap size={14} /> {isRP ? 'Rechercher' : 'Analyser'} {inBudget} biens <ChevronRight size={14} /></>
+              : <><Zap size={14} /> {isRP ? 'Trouver' : 'Classer'} les {inBudget} biens éligibles <ChevronRight size={14} /></>
             }
           </button>
+          <div className="opt-run-hint">
+            {isRP
+              ? 'Filtre par budget et classe par décote marché'
+              : 'Calcule TRI, cashflow et apport optimal · classe par profil'}
+          </div>
 
         </aside>
         <ResizeHandle dir="x" onMouseDown={onSidebarDrag} />

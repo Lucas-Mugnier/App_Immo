@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
-import { useStore } from '@/store/useStore'
+import { useEffect } from 'react'
+import { useStore, useIsAdmin } from '@/store/useStore'
+import { signOut } from '@/lib/supabase'
 import type { TabId } from '@/types'
 import { cn } from '@/lib/utils'
-import { BarChart2, Scale, LineChart, Moon, Sun, Building2, ShieldCheck, BookOpen, User } from 'lucide-react'
+import { BarChart2, Scale, LineChart, Moon, Sun, Building2, ShieldCheck, BookOpen, User, LogOut } from 'lucide-react'
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'biens',       label: 'Biens',        icon: <Building2 size={13} /> },
@@ -21,29 +22,11 @@ interface Props {
 
 export function AppShell({ children, apportCount, maisonCount }: Props) {
   const { activeTab, setActiveTab, dark, setDark } = useStore()
+  const isAdmin = useIsAdmin()
 
   // migrate legacy persisted tab values
   const LEGACY: Record<string, TabId> = { apparts: 'biens', maisons: 'biens', simulation: 'analyse', optimiseur: 'analyse' }
   const resolvedTab: TabId = LEGACY[activeTab as string] ?? activeTab
-
-  // Admin mode — toggled with Ctrl+Shift+A, persisted in localStorage
-  const [adminMode, setAdminMode] = useState(() => {
-    return localStorage.getItem('alpestate-admin') === '1'
-  })
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-        setAdminMode(prev => {
-          const next = !prev
-          localStorage.setItem('alpestate-admin', next ? '1' : '0')
-          return next
-        })
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   useEffect(() => {
     if (dark) {
@@ -81,7 +64,7 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
                C840,48 878,26 940,10
                C972,4 1002,6 1032,10
                C1062,14 1102,38 1158,54
-               C1198,64 1260,68 1320,68 1400,68
+               C1198,64 1260,68 1320,68
                L1400,68 L0,68Z"
           />
           {/* Mid mountains */}
@@ -148,6 +131,14 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
             >
               {dark ? <Sun size={14} /> : <Moon size={14} />}
             </button>
+            <button
+              className="theme-toggle"
+              onClick={() => signOut()}
+              title="Se déconnecter"
+              aria-label="Se déconnecter"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </div>
       </header>
@@ -164,7 +155,7 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
             <span>{tab.label}</span>
           </button>
         ))}
-        {adminMode && (
+        {isAdmin && (
           <button
             className={cn('tab-btn tab-btn--admin', resolvedTab === 'admin' && 'active')}
             onClick={() => setActiveTab('admin')}

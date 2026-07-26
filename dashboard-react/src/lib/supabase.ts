@@ -6,6 +6,34 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undef
 export const supabase =
   supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
+export const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL as string | undefined
+
+export async function signUpWithEmail(email: string, password: string) {
+  if (!supabase) return { error: 'Supabase non configuré' }
+  const { error } = await supabase.auth.signUp({ email, password })
+  return { error: error?.message ?? null }
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  if (!supabase) return { error: 'Supabase non configuré' }
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  return { error: error?.message ?? null }
+}
+
+export async function signInWithGoogle() {
+  if (!supabase) return { error: 'Supabase non configuré' }
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+  return { error: error?.message ?? null }
+}
+
+export async function signOut() {
+  if (!supabase) return
+  await supabase.auth.signOut()
+}
+
 export type CorrectionField = 'neighbourhood' | 'surface' | 'carrez' | 'prix' | 'autre'
 
 export interface Correction {

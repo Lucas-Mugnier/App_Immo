@@ -2,7 +2,8 @@
 *.sqlite
 __pycache__/
 *.pyc
-dvf/
+dvf/*
+!dvf/listings_market.db
 node_modules/
 dist/
 .claude/

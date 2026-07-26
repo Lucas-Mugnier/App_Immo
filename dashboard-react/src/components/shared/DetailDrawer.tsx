@@ -3,6 +3,7 @@ import {
   X, ExternalLink, ChevronLeft, ChevronRight,
   Building2, Home, TrendingDown, Calendar, Ruler,
   AlertTriangle, Info, MapPin, Flag, CheckCircle, Clock, ArrowLeft,
+  GitCompare, Zap, BarChart2,
 } from 'lucide-react'
 import type { BienRow } from '@/components/tabs/BiensTab'
 import type { PriceHistory, Listing, Maison } from '@/types'
@@ -13,6 +14,9 @@ import { CorrectionModal } from '@/components/shared/CorrectionModal'
 import { fetchCorrections, FIELD_LABELS, type Correction } from '@/lib/supabase'
 import { eur, num, daysAgo, median } from '@/lib/utils'
 import { APPARTS, MAISONS } from '@/lib/data'
+import { useStore } from '@/store/useStore'
+import { buildProjection, computeTRI, findApportOptimal } from '@/lib/simulator'
+import type { FiscalMode } from '@/types'
 
 // ── Comps (comparable sales from DVF) ─────────────────────────────────────────
 
@@ -222,6 +226,7 @@ function aptToBienRow(r: Listing): BienRow {
     price_history: r.price_history, price_drop: r.price_drop,
     nb_baisses: r.nb_baisses, is_relisted: r.is_relisted,
     relisted_after_days: r.relisted_after_days, avm_model: r.avm_model,
+    description: r.description,
     _appart_id: r.id, _appart_surface: r.surface,
     _appart_rooms: r.rooms, _appart_location: r.location,
   }
@@ -612,6 +617,20 @@ const KIND_STYLE: Record<FactorKind, { color: string; dot: string }> = {
   'signal-neutral':{ color: 'var(--amber)', dot: 'var(--amber)' },
 }
 
+function CollapseSection({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="score-breakdown-group">
+      <button className="score-breakdown-group-label score-breakdown-toggle" onClick={() => setOpen(o => !o)}>
+        <span>{label}</span>
+        {note && <span className="score-breakdown-group-note">{note}</span>}
+        <ChevronRight size={11} style={{ marginLeft: 'auto', flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.18s' }} />
+      </button>
+      {open && children}
+    </div>
+  )
+}
+
 function ScoreBreakdown({ row }: { row: BienRow }) {
   const factors = buildFactors(row)
   const scoreFactors  = factors.filter((f) => f.isScore)
@@ -620,23 +639,14 @@ function ScoreBreakdown({ row }: { row: BienRow }) {
   return (
     <div className="score-breakdown">
       {scoreFactors.length > 0 && (
-        <>
-          <div className="score-breakdown-group-label">Calcul du score</div>
-          {scoreFactors.map((f, i) => (
-            <FactorRow key={i} factor={f} />
-          ))}
-        </>
+        <CollapseSection label="Calcul du score">
+          {scoreFactors.map((f, i) => <FactorRow key={i} factor={f} />)}
+        </CollapseSection>
       )}
       {signalFactors.length > 0 && (
-        <>
-          <div className="score-breakdown-group-label" style={{ marginTop: 10 }}>
-            Signaux investisseur
-            <span className="score-breakdown-group-note">n'affectent pas le score</span>
-          </div>
-          {signalFactors.map((f, i) => (
-            <FactorRow key={i} factor={f} />
-          ))}
-        </>
+        <CollapseSection label="Signaux investisseur" note="n'affectent pas le score">
+          {signalFactors.map((f, i) => <FactorRow key={i} factor={f} />)}
+        </CollapseSection>
       )}
     </div>
   )
@@ -656,6 +666,125 @@ function FactorRow({ factor: f }: { factor: Factor }) {
   )
 }
 
+// ── Drawer simulation panel ───────────────────────────────────────────────────
+
+const FISCAL_MODES_SIM = [
+  { id: 'lmnp_reel'  as FiscalMode, label: 'LMNP Réel' },
+  { id: 'lmnp_micro' as FiscalMode, label: 'Micro BIC' },
+  { id: 'ir_nu'      as FiscalMode, label: 'IR Nu' },
+  { id: 'sci_is'     as FiscalMode, label: 'SCI IS' },
+]
+
+
+function DrawerSim({ row, onOpenFull }: { row: BienRow; onOpenFull: () => void }) {
+  const { simParams, setSimParams: sp } = useStore()
+  const { taux, duree, apportEur, fraisNotaireP, chargesAn, mode, tmi,
+          vacanceP, planRevente, revente, indexLoyer, indexPrix } = simParams
+
+  const derivedLoyer = row.yield
+    ? Math.round(row.price * (row.yield / 100) / 12)
+    : simParams.loyer
+  const [loyer, setLoyer] = useState(derivedLoyer)
+  useEffect(() => {
+    setLoyer(row.yield ? Math.round(row.price * (row.yield / 100) / 12) : simParams.loyer)
+  }, [row.price, row.yield]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const proj = useMemo(() => buildProjection({
+    prix: row.price, apportEur, loyer, chargesAn,
+    taux, duree, indexLoyer, indexPrix, tmi,
+    dureeRevente: planRevente ? revente : 0,
+    mode, fraisNotaireP, vacanceP: vacanceP / 100,
+  }), [row.price, apportEur, loyer, chargesAn, taux, duree, indexLoyer, indexPrix,
+       tmi, revente, planRevente, mode, fraisNotaireP, vacanceP])
+
+  if (!proj.length) return null
+  const yr1        = proj[0]
+  const fraisNot   = row.price * fraisNotaireP / 100
+  const invest     = apportEur + fraisNot
+  const rdtNet     = invest > 0 ? (yr1.loyerAnnuel - yr1.chargesYr - yr1.impot) / invest * 100 : 0
+  const cfMois     = yr1.cashflowAn / 12
+  const apportPct  = row.price > 0 ? Math.round(apportEur / row.price * 100) : 0
+  const cfColor    = cfMois >= 0 ? 'var(--green)' : 'var(--red)'
+  const modeLabel  = FISCAL_MODES_SIM.find((m) => m.id === mode)?.label ?? mode
+
+  return (
+    <div className="drawer-sim">
+
+      {/* ── Résultat principal ── */}
+      <div className="ds-result">
+        <div className="ds-result-label">Cashflow net / mois · an 1</div>
+        <div className="ds-result-val" style={{ color: cfColor }}>
+          {cfMois >= 0 ? '+' : ''}{eur(cfMois, 0)}
+        </div>
+        <div className="ds-result-breakdown">
+          <span>{eur(loyer)} loyer</span>
+          <span>− {eur(yr1.mensualite)} mensualité</span>
+          <span>− {eur(yr1.chargesYr / 12, 0)} charges</span>
+          {yr1.impot > 0 && <span>− {eur(yr1.impot / 12, 0)} impôt ({modeLabel})</span>}
+        </div>
+        <div className="ds-result-sub">
+          Rendement net {rdtNet.toFixed(1)} % · Patrimoine an 10 {proj[9] ? eur(proj[9].patrimoineNet, 0) : '—'}
+        </div>
+      </div>
+
+      {/* ── Apport (levier principal) ── */}
+      <div className="ds-apport-block">
+        <div className="ds-apport-header">
+          <span className="ds-label">Apport — {apportPct} %</span>
+          <span className="ds-apport-eur">{eur(apportEur)}</span>
+        </div>
+        <input type="range" className="sim-range" min={0} max={Math.round(row.price * 0.5 / 5000) * 5000}
+          step={5000} value={apportEur} style={{ accentColor: 'var(--accent)' }}
+          onChange={(e) => sp({ apportEur: +e.target.value })} />
+        <button className="ds-cf0-btn" onClick={() => {
+          const a = findApportOptimal(row.price, fraisNotaireP, loyer, chargesAn, taux, duree, tmi, mode, vacanceP / 100)
+          sp({ apportEur: a })
+        }}>
+          <Zap size={11} /> Apport CF = 0
+        </button>
+      </div>
+
+      {/* ── Params secondaires en grille compacte ── */}
+      <div className="ds-params-grid">
+        <div className="ds-param">
+          <span className="ds-label">Loyer</span>
+          <div className="ds-param-ctrl">
+            <input type="number" className="ds-mini-input" value={loyer} step={50} min={0}
+              onChange={(e) => setLoyer(Math.max(0, +e.target.value || 0))} />
+            <span className="ds-unit">€/mois</span>
+          </div>
+        </div>
+        <div className="ds-param">
+          <span className="ds-label">Taux</span>
+          <div className="ds-param-ctrl">
+            <input type="number" className="ds-mini-input" value={taux} step={0.1} min={0.5} max={7}
+              onChange={(e) => sp({ taux: Math.max(0.5, +e.target.value || 0) })} />
+            <span className="ds-unit">%</span>
+          </div>
+        </div>
+        <div className="ds-param">
+          <span className="ds-label">Durée</span>
+          <div className="ds-param-ctrl">
+            <input type="number" className="ds-mini-input" value={duree} step={1} min={5} max={30}
+              onChange={(e) => sp({ duree: Math.max(5, +e.target.value || 20) })} />
+            <span className="ds-unit">ans</span>
+          </div>
+        </div>
+        <div className="ds-param">
+          <span className="ds-label">Fiscal</span>
+          <select className="ds-select" value={mode} onChange={(e) => sp({ mode: e.target.value as FiscalMode })}>
+            {FISCAL_MODES_SIM.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <button className="ds-full-btn" onClick={onOpenFull}>
+        <BarChart2 size={13} /> Analyse complète →
+      </button>
+    </div>
+  )
+}
+
 // ── Main drawer ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -664,13 +793,15 @@ interface Props {
 }
 
 export function DetailDrawer({ row: baseRow, onClose }: Props) {
+  const { setActiveTab, setSimPreselect, toggleCompare, compareIds } = useStore()
   const [photoIdx, setPhotoIdx]             = useState(0)
   const [corrections, setCorrections]       = useState<Correction[]>([])
   const [correctionOpen, setCorrectionOpen] = useState(false)
   const [subRow, setSubRow]                 = useState<BienRow | null>(null)
+  const [drawerTab, setDrawerTab]           = useState<'detail' | 'sim'>('detail')
 
-  // Reset sub-navigation when outer row changes
-  useEffect(() => { setSubRow(null) }, [baseRow?._key])
+  // Reset sub-navigation + sim tab when outer row changes
+  useEffect(() => { setSubRow(null); setDrawerTab('detail') }, [baseRow?._key])
 
   // The row actually displayed (sub-navigation overrides base)
   const row = subRow ?? baseRow
@@ -748,6 +879,20 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
               </button>
             </div>
 
+            {/* ── Tab bar ── */}
+            <div className="drawer-tabs">
+              <button className={`drawer-tab-btn${drawerTab === 'detail' ? ' active' : ''}`}
+                onClick={() => setDrawerTab('detail')}>Détail</button>
+              <button className={`drawer-tab-btn${drawerTab === 'sim' ? ' active' : ''}`}
+                onClick={() => setDrawerTab('sim')}>Simulation</button>
+            </div>
+
+            {drawerTab === 'sim' ? (
+              <DrawerSim row={row} onOpenFull={() => {
+                setSimPreselect(row._key); setActiveTab('analyse'); onClose()
+              }} />
+            ) : (<>
+
             {/* ── Gallery ── */}
             <div className="drawer-gallery">
               {photos.length > 0 ? (
@@ -822,6 +967,14 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
                 )}
               </div>
 
+              {/* Description de l'annonce */}
+              {row.description && row.description.trim().length > 20 && (
+                <div className="drawer-section">
+                  <div className="drawer-section-label">Description de l'annonce</div>
+                  <p className="drawer-description">{row.description.trim()}</p>
+                </div>
+              )}
+
               {/* Community corrections */}
               {corrections.length > 0 && (
                 <div className="drawer-section corrections-drawer-section">
@@ -872,6 +1025,14 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
                 </div>
                 <ScoreBreakdown row={row} />
               </div>
+
+              {/* AVM suspect warning */}
+              {row.avm_suspect && (
+                <div className="drawer-suspect-banner">
+                  <AlertTriangle size={12} />
+                  <span>Ratio AVM très bas ({row.avm_ratio != null ? `${Math.round(row.avm_ratio * 100)}%` : 'N/A'}) — vérifier la surface ou le bien avant de conclure</span>
+                </div>
+              )}
 
               {/* AVM + explication */}
               {row.avm_pred != null && row.avm_ratio != null && (
@@ -935,14 +1096,6 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
                 </div>
               )}
 
-              {/* Description (maisons) */}
-              {row.description && row.description.trim().length > 20 && (
-                <div className="drawer-section">
-                  <div className="drawer-section-label">Description de l'annonce</div>
-                  <p className="drawer-description">{row.description.trim()}</p>
-                </div>
-              )}
-
               {/* Ventes comparables DVF */}
               <div className="drawer-section">
                 <ComparableSales row={row} />
@@ -968,6 +1121,8 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
               </div>
             </div>
 
+            </>)}
+
             {/* ── Footer ── */}
             <div className="drawer-footer" onClick={(e) => e.stopPropagation()}>
               <AppartActions
@@ -978,6 +1133,14 @@ export function DetailDrawer({ row: baseRow, onClose }: Props) {
                 price={row.price}
               />
               <div className="drawer-footer-right">
+                <button
+                  className={`drawer-action-btn${compareIds.includes(row._key) ? ' active' : ''}`}
+                  onClick={() => toggleCompare(row._key)}
+                  title={compareIds.includes(row._key) ? 'Retirer du comparateur' : 'Ajouter au comparateur'}
+                >
+                  <GitCompare size={12} />
+                  {compareIds.includes(row._key) ? 'Comparé' : 'Comparer'}
+                </button>
                 <button
                   className="drawer-correction-btn"
                   onClick={() => setCorrectionOpen(true)}

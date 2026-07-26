@@ -198,20 +198,19 @@ const SIM_MODES: { id: SimMode; label: string }[] = [
   { id: 'sci_is',     label: 'SCI IS'         },
 ]
 
-function quickCashflow(prix: number, apport: number, loyer: number, duree: number, mode: SimMode, tmi: number): { mens: number; net: number } {
+function quickCashflow(prix: number, apport: number, loyer: number, duree: number, mode: SimMode, tmi: number, taux: number, chargesAn: number): { mens: number; net: number } {
   const emprunt = Math.max(0, prix - apport)
-  const r = (3.5 / 100) / 12, n = duree * 12
+  const r = (taux / 100) / 12, n = duree * 12
   const mens = r > 0 && emprunt > 0 ? emprunt * r / (1 - Math.pow(1 + r, -n)) : emprunt > 0 ? emprunt / n : 0
-  const charges = 200
-  const loyerAn = loyer * 12, chargesAn = charges * 12 + prix * 0.008
-  const interets = emprunt * 0.035 * 0.9, amort = prix * 0.85 / 25
+  const loyerAn = loyer * 12
+  const interets = emprunt * (taux / 100) * 0.9, amort = prix * 0.85 / 25
   const tTotal = tmi / 100 + 0.172
   let impotMois = 0
   if      (mode === 'lmnp_reel')  impotMois = Math.max(0, loyerAn - chargesAn - interets - amort) * tTotal / 12
   else if (mode === 'lmnp_micro') impotMois = loyerAn * 0.5 * tTotal / 12
   else if (mode === 'ir_nu')      impotMois = Math.max(0, loyerAn - chargesAn - interets) * tTotal / 12
   else { const b = Math.max(0, loyerAn - chargesAn - interets - amort); impotMois = (b <= 42500 ? b * 0.15 : 42500 * 0.15 + (b - 42500) * 0.25) / 12 }
-  return { mens: Math.round(mens), net: Math.round(loyer - mens - charges - impotMois) }
+  return { mens: Math.round(mens), net: Math.round(loyer - mens - chargesAn / 12 - impotMois) }
 }
 
 // ── Editable number cell ──────────────────────────────────────────────────────
@@ -450,7 +449,7 @@ function EmptyState() {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export function ComparateurTab() {
-  const { compareIds, toggleCompare, investProfile, setActiveTab, setSimPreselect } = useStore()
+  const { compareIds, toggleCompare, investProfile, setActiveTab, setSimPreselect, simParams } = useStore()
   const [strategie, setStrategie]   = useState<InvestStrategie>(investProfile.strategie ?? 'mixte')
   const [affinages, setAffinages]   = useState<Record<string, AfinageState>>({})
   const [afinOpen, setAfinOpen]     = useState<string | null>(null)
@@ -520,7 +519,7 @@ export function ComparateurTab() {
   const stratScores = biens.map((b) => strategyScore(b, strategie, adjRatios[b.key] ?? null, effectiveYield(b)))
   const bStrat  = bestIdx(stratScores.map((s) => s), 'max')
 
-  const cashflows = biens.map((b) => quickCashflow(effectivePrice(b), simApport, effectiveLoyer(b), simDuree, simMode, simTmi))
+  const cashflows = biens.map((b) => quickCashflow(effectivePrice(b), simApport, effectiveLoyer(b), simDuree, simMode, simTmi, simParams.taux, simParams.chargesAn))
   const bCashflow = bestIdx(cashflows.map((c) => c.net), 'max')
 
   const currentStrat = STRATEGIES.find((s) => s.id === strategie)
@@ -718,7 +717,7 @@ export function ComparateurTab() {
                 <div className="cmp-shared-input-wrap">
                   <input type="number" className="cmp-shared-input" value={simDuree} min={5} max={30} step={1}
                     onChange={(e) => setSimDuree(Math.max(5, Math.min(30, +e.target.value || 20)))} />
-                  <span className="cmp-shared-suffix">ans · 3.5 %</span>
+                  <span className="cmp-shared-suffix">ans · {simParams.taux} %</span>
                 </div>
               </div>
 

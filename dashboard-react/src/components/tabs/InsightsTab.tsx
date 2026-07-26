@@ -89,8 +89,8 @@ const DVF_ORDER = [
 ]
 
 function DvfTrends() {
-  const communes = DVF_ORDER.filter((k) => DVF_STATS.communes[k])
-  const years    = DVF_STATS.annees.map(String)
+  const communes = DVF_ORDER.filter((k) => DVF_STATS.communes?.[k])
+  const years    = (DVF_STATS.annees ?? []).map(String)
   const W = 100; const H = 28
 
   function Spark({ byYear }: { byYear: Record<string, { median_m2: number }> }) {
@@ -109,6 +109,7 @@ function DvfTrends() {
     )
   }
 
+  if (!communes.length || !years.length) return null
   const maxCagr = Math.max(...communes.map((k) => DVF_STATS.communes[k].cagr_pct))
   return (
     <div className="insight-card">
@@ -682,7 +683,7 @@ export function InsightsTab() {
                 const price   = isApt ? (item as Listing).price       : (item as Maison).prix
                 const surface = isApt ? (item as Listing).surface     : (item as Maison).surface
                 const pred    = isApt ? (item as Listing).avm_pred    : (item as Maison).avm_pred
-                const loc     = isApt ? ((item as Listing).neighbourhood || (item as Listing).location) : `Maison §${(item as Maison).section}`
+                const loc     = isApt ? ((item as Listing).neighbourhood || (item as Listing).location) : (item as Maison).neighbourhood
                 const pct     = ((1 - ratio) * 100)
                 const color   = ratio <= 0.90 ? 'var(--green)' : ratio <= 1.05 ? 'var(--accent)' : 'var(--red)'
                 return (

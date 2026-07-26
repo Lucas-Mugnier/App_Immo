@@ -1,5 +1,21 @@
 import type { FiscalMode } from '@/types'
 
+// Plus-value immobilière — taux effectif après abattements progressifs
+// IR: exonéré après 22 ans (6%/an dès an 6)
+// PS: exonéré après 30 ans (1.65%/an dès an 6, puis 9%/an dès an 22)
+function tauxPlusValue(anneesDetention: number): number {
+  if (anneesDetention >= 30) return 0
+  const abatIR = anneesDetention >= 6
+    ? Math.min(1, (anneesDetention - 5) * 0.06)
+    : 0
+  const abatCS = anneesDetention >= 22
+    ? Math.min(1, (anneesDetention - 5) * 0.0165 + (anneesDetention - 22) * 0.09)
+    : anneesDetention >= 6
+    ? Math.min(1, (anneesDetention - 5) * 0.0165)
+    : 0
+  return (1 - abatIR) * 0.19 + (1 - abatCS) * 0.172
+}
+
 export interface ProjRow {
   annee: number
   loyerAnnuel: number; chargesYr: number; interets: number; impot: number
@@ -66,9 +82,11 @@ export function buildProjection(p: {
 
     let gainRevente: number | null = null
     if (yr === dureeRevente && dureeRevente > 0) {
-      const fraisVente = valeurBien * 0.05
+      const fraisVente   = valeurBien * 0.05
+      const gainBrut     = valeurBien - (prix + fraisNotaire)
+      const taxPV        = gainBrut > 0 ? gainBrut * tauxPlusValue(yr) : 0
       gainRevente = Math.round(
-        valeurBien - capitalRestant - fraisVente - (apportEur + fraisNotaire) + cashflowCumul
+        valeurBien - capitalRestant - fraisVente - taxPV - (apportEur + fraisNotaire) + cashflowCumul
       )
     }
 
@@ -133,14 +151,14 @@ export function computeVAN(
 
 export function findApportOptimal(
   prix: number, fraisNotaireP: number, loyer: number, chargesAn: number,
-  taux: number, duree: number, tmi: number, mode: FiscalMode,
+  taux: number, duree: number, tmi: number, mode: FiscalMode, vacanceP = 0,
 ): number {
   let lo = 0, hi = Math.round(prix * (1 + fraisNotaireP / 100))
   for (let i = 0; i < 60; i++) {
     const mid  = Math.round((lo + hi) / 2)
     const proj = buildProjection({
       prix, apportEur: mid, loyer, chargesAn, taux, duree,
-      indexLoyer: 2, indexPrix: 3, tmi, dureeRevente: 0, mode, fraisNotaireP,
+      indexLoyer: 2, indexPrix: 3, tmi, dureeRevente: 0, mode, fraisNotaireP, vacanceP,
     })
     if (proj[0].cashflowAn >= 0) hi = mid
     else lo = mid
