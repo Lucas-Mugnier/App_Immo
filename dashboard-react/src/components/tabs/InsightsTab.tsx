@@ -37,6 +37,11 @@ const DVF_GEO: Record<string, [number, number]> = {
   'DOMANCY':                [45.9213, 6.6612],
 }
 
+// Échappe le texte injecté dans les popups Leaflet (HTML brut)
+function esc(v: unknown): string {
+  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
+}
+
 function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -430,7 +435,7 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
               L.marker([center[0] + dl, center[1] + dn], { icon: makeIcon('appart', color) })
               .bindPopup(`<div style="font-size:0.78rem;min-width:140px">
                   <div style="font-size:0.68rem;color:#888;margin-bottom:3px">Appartement</div>
-                  <div style="font-weight:600">${nb}</div>
+                  <div style="font-weight:600">${esc(nb)}</div>
                   <div style="margin-top:4px">${eur(r.price)} · ${r.surface}m²</div>
                   ${pm2v ? `<div style="color:#888">${num(pm2v)}€/m²</div>` : ''}
                   ${r.avm_ratio != null ? `<div style="color:${color}">AVM ×${r.avm_ratio.toFixed(2)}</div>` : ''}
@@ -453,8 +458,8 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
             const color = saleColor(pm2v, m.avm_ratio, m.avm_score, false)
             L.marker([lat + dl, lon + dn], { icon: makeIcon('maison', color) })
             .bindPopup(`<div style="font-size:0.78rem;min-width:140px">
-                <div style="font-size:0.68rem;color:#888;margin-bottom:3px">Maison · §${m.section}</div>
-                <div style="font-weight:600">${m.neighbourhood || m.section}</div>
+                <div style="font-size:0.68rem;color:#888;margin-bottom:3px">Maison · §${esc(m.section)}</div>
+                <div style="font-weight:600">${esc(m.neighbourhood || m.section)}</div>
                 <div style="margin-top:4px">${eur(m.prix)} · ${m.surface}m²</div>
                 ${pm2v ? `<div style="color:#888">${num(pm2v)}€/m²</div>` : ''}
                 ${m.avm_ratio != null ? `<div style="color:${color}">AVM ×${m.avm_ratio.toFixed(2)}</div>` : ''}
@@ -498,7 +503,7 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
           })
           .bindPopup(`<div style="font-size:0.78rem;min-width:150px">
               <div style="font-size:0.68rem;color:#6b8cba;margin-bottom:3px;font-weight:600">DVF ${pt.y} · ${typLabel}</div>
-              <div style="font-weight:600;margin-bottom:2px">${addrLine}</div>
+              <div style="font-weight:600;margin-bottom:2px">${esc(addrLine)}</div>
               <div>${eur(pt.p)} · ${pt.s}m²${pt.ter ? ` · ${num(pt.ter)}m² terrain` : ''}</div>
               ${pm2Line ? `<div style="color:${color};font-weight:600">${pm2Line}</div>` : ''}
             </div>`)
