@@ -1,12 +1,10 @@
 import { useMemo, useEffect, useRef, useState } from 'react'
 import { BarChart, Bar as RBar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { useStore } from '@/store/useStore'
+import { useStore, useHasPrivateData } from '@/store/useStore'
 import { eur, num, pm2, median, daysAgo, cn, NEIGHBOURHOOD_ORDER } from '@/lib/utils'
 import type { Listing, Maison, InsightType, MapMetric } from '@/types'
 import { APPARTS, MAISONS, DVF_STATS, DVF_POINTS } from '@/lib/data'
 
-const ALL_APT = APPARTS
-const ALL_MAI = MAISONS
 
 // ── Geo: neighbourhood centroids ──────────────────────────────────────────────
 const NB_GEO: Record<string, [number, number]> = {
@@ -145,15 +143,15 @@ function Pm2VsDvf({ insightType, sector }: { insightType: InsightType; sector: s
     const nbs = sector !== 'all'
       ? [sector]
       : NEIGHBOURHOOD_ORDER.filter((nb) =>
-          ALL_APT.some((r) => r.neighbourhood === nb) || ALL_MAI.some((m) => m.neighbourhood === nb)
+          APPARTS.some((r) => r.neighbourhood === nb) || MAISONS.some((m) => m.neighbourhood === nb)
         )
     return nbs.map((nb) => {
       const center = NB_GEO[nb]
       const aptPm2s = insightType !== 'maisons'
-        ? ALL_APT.filter((r) => r.neighbourhood === nb).map((r) => pm2(r.price, r.surface)).filter(Boolean) as number[]
+        ? APPARTS.filter((r) => r.neighbourhood === nb).map((r) => pm2(r.price, r.surface)).filter(Boolean) as number[]
         : []
       const maiPm2s = insightType !== 'apparts'
-        ? ALL_MAI.filter((m) => m.neighbourhood === nb).map((m) => pm2(m.prix, m.surface)).filter(Boolean) as number[]
+        ? MAISONS.filter((m) => m.neighbourhood === nb).map((m) => pm2(m.prix, m.surface)).filter(Boolean) as number[]
         : []
       const listingPm2 = median([...aptPm2s, ...maiPm2s])
       const dvfPts = center
@@ -219,13 +217,13 @@ function Pm2Distribution({ insightType }: { insightType: InsightType }) {
       BINS.push({ lo, hi: lo + 2000, label: `${lo / 1000}k`, apt: 0, mai: 0 })
     }
     if (insightType !== 'maisons') {
-      ALL_APT.forEach((r) => {
+      APPARTS.forEach((r) => {
         const v = pm2(r.price, r.surface); if (!v) return
         const b = BINS.find((b) => v >= b.lo && v < b.hi); if (b) b.apt++
       })
     }
     if (insightType !== 'apparts') {
-      ALL_MAI.forEach((m) => {
+      MAISONS.forEach((m) => {
         const v = pm2(m.prix, m.surface); if (!v) return
         const b = BINS.find((b) => v >= b.lo && v < b.hi); if (b) b.mai++
       })
@@ -259,8 +257,8 @@ function Pm2Distribution({ insightType }: { insightType: InsightType }) {
 // ── Ancienneté des annonces ───────────────────────────────────────────────────
 function AnciennetePanel({ insightType, sector }: { insightType: InsightType; sector: string }) {
   const items = useMemo(() => {
-    let apt = insightType !== 'maisons' ? ALL_APT : []
-    let mai = insightType !== 'apparts' ? ALL_MAI : []
+    let apt = insightType !== 'maisons' ? APPARTS : []
+    let mai = insightType !== 'apparts' ? MAISONS : []
     if (sector !== 'all') {
       apt = apt.filter((r) => r.neighbourhood === sector)
       mai = mai.filter((m) => m.neighbourhood === sector)
@@ -416,8 +414,8 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
         // Apartments — grouped at neighbourhood centroid with jitter
         if (insightType !== 'maisons' && bienFilter !== 'maisons') {
           const filtered = sector !== 'all'
-            ? ALL_APT.filter((r) => r.neighbourhood === sector)
-            : ALL_APT
+            ? APPARTS.filter((r) => r.neighbourhood === sector)
+            : APPARTS
           const byNb: Record<string, Listing[]> = {}
           filtered.forEach((r) => {
             const nb = r.neighbourhood || r.location || 'Chamonix Centre'
@@ -445,8 +443,8 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
         // Maisons — use actual lat/lon when available, else neighbourhood centroid
         if (insightType !== 'apparts' && bienFilter !== 'apparts') {
           const filtered = sector !== 'all'
-            ? ALL_MAI.filter((m) => m.neighbourhood === sector)
-            : ALL_MAI
+            ? MAISONS.filter((m) => m.neighbourhood === sector)
+            : MAISONS
           filtered.forEach((m, i) => {
             const lat = m.lat ?? NB_GEO[m.neighbourhood]?.[0] ?? 45.923
             const lon = m.lon ?? NB_GEO[m.neighbourhood]?.[1] ?? 6.869
@@ -525,15 +523,17 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
 export function InsightsTab() {
   const { insightType, setInsightType, mapMetric, setMapMetric, dark } = useStore()
   const [sector,     setSector]     = useState<string>('all')
-  const [mapLayers,  setMapLayers]  = useState<Set<MapLayer>>(new Set(['sale']))
+  const hasData = useHasPrivateData()
+  const setLoginOpen = useStore((s) => s.setLoginOpen)
+  const [mapLayers,  setMapLayers]  = useState<Set<MapLayer>>(new Set([hasData ? 'sale' : 'dvf']))
   const [mapBien,    setMapBien]    = useState<MapBien>('all')
 
   const availableNeighbourhoods = useMemo(() => {
     const fromApt = insightType !== 'maisons'
-      ? ALL_APT.map((r) => r.neighbourhood).filter(Boolean)
+      ? APPARTS.map((r) => r.neighbourhood).filter(Boolean)
       : []
     const fromMai = insightType !== 'apparts'
-      ? ALL_MAI.map((m) => m.neighbourhood).filter(Boolean)
+      ? MAISONS.map((m) => m.neighbourhood).filter(Boolean)
       : []
     return NEIGHBOURHOOD_ORDER.filter((n) => new Set([...fromApt, ...fromMai]).has(n))
   }, [insightType])
@@ -543,8 +543,8 @@ export function InsightsTab() {
   }, [insightType, availableNeighbourhoods, sector])
 
   const data = useMemo(() => {
-    let apt = insightType !== 'maisons' ? ALL_APT : []
-    let mai = insightType !== 'apparts' ? ALL_MAI : []
+    let apt = insightType !== 'maisons' ? APPARTS : []
+    let mai = insightType !== 'apparts' ? MAISONS : []
     if (sector !== 'all') {
       apt = apt.filter((r) => r.neighbourhood === sector)
       mai = mai.filter((m) => m.neighbourhood === sector)
@@ -574,11 +574,11 @@ export function InsightsTab() {
     const medRatio = median(ratios)
 
     const zones = sector === 'all'
-      ? NEIGHBOURHOOD_ORDER.filter((n) => ALL_APT.some((r) => r.neighbourhood === n) || ALL_MAI.some((m) => m.neighbourhood === n))
+      ? NEIGHBOURHOOD_ORDER.filter((n) => APPARTS.some((r) => r.neighbourhood === n) || MAISONS.some((m) => m.neighbourhood === n))
       : [sector]
     const pm2Zone = zones.map((nb) => {
-      const srcApt = sector === 'all' ? ALL_APT : apt
-      const srcMai = sector === 'all' ? ALL_MAI : mai
+      const srcApt = sector === 'all' ? APPARTS : apt
+      const srcMai = sector === 'all' ? MAISONS : mai
       const ps = [
         ...srcApt.filter((r) => r.neighbourhood === nb).map((r) => pm2(r.price, r.surface)),
         ...srcMai.filter((m) => m.neighbourhood === nb).map((m) => pm2(m.prix, m.surface)),
@@ -598,6 +598,63 @@ export function InsightsTab() {
       else next.add(l)
       return next
     })
+  }
+
+  // ── Version publique : uniquement les données ouvertes DVF ─────────────────
+  if (!hasData) {
+    return (
+      <div className="overflow-auto h-full">
+        <div className="insight-page">
+          <div className="insight-card public-intro">
+            <div>
+              <h1 className="public-intro-title">Le marché immobilier de Chamonix, en données réelles</h1>
+              <p className="public-intro-text">
+                Prix au m² et tendances issus des ventes réellement enregistrées (DVF),
+                carte des transactions et estimateur de valeur. Le suivi des annonces en
+                cours est réservé aux comptes invités.
+              </p>
+            </div>
+            <div className="public-intro-actions">
+              <button className="login-btn-primary" onClick={() => useStore.getState().openEstimateur({})}>
+                Estimer un bien
+              </button>
+              <button className="login-btn-secondary" onClick={() => setLoginOpen(true)}>
+                Accès invité
+              </button>
+            </div>
+          </div>
+
+          <DvfTrends />
+
+          <div className="insight-card">
+            <div className="insight-card-header">
+              <span className="insight-card-title">Carte des ventes (DVF)</span>
+            </div>
+            <div className="insight-map-controls">
+              <div className="insight-map-ctrl-group">
+                <span className="insight-sector-label">Type</span>
+                <div className="insight-filter-group">
+                  {(['all', 'apparts', 'maisons'] as MapBien[]).map((b) => (
+                    <button key={b}
+                      className={cn('insight-filter-btn', mapBien === b && 'active')}
+                      onClick={() => setMapBien(b)}>
+                      {b === 'all' ? 'Tout' : b === 'apparts' ? 'Apparts' : 'Maisons'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <MapView insightType={insightType} metric={mapMetric} sector="all" dark={dark}
+              layers={mapLayers} bienFilter={mapBien} />
+            <div className="insight-map-legend">
+              <div className="insight-legend-item"><span className="insight-legend-dot" style={{ background: '#4a9a6a' }} /><span>&lt;10k€/m²</span></div>
+              <div className="insight-legend-item"><span className="insight-legend-dot" style={{ background: '#c49a3a' }} /><span>10–15k€/m²</span></div>
+              <div className="insight-legend-item"><span className="insight-legend-dot" style={{ background: '#c94040' }} /><span>&gt;15k€/m²</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

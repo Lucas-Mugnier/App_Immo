@@ -1,5 +1,6 @@
 import avmLookupRaw from '@/data/avm_lookup.json'
-import { DVF_STATS, MAISONS } from '@/lib/data'
+import { DVF_STATS } from '@/lib/data'
+import maisonSecteursRaw from '@/data/maison_secteurs.json'
 
 const AVM_LOOKUP = avmLookupRaw as Record<string, {
   surf: number[]
@@ -133,33 +134,12 @@ export function avmMaisonDvf(secteur: string, surface: number): number | null {
 export interface SecteurStats {
   secteur: string; n: number
   medianPm2: number; minPm2: number; maxPm2: number
-  biens: { prix: number; surface: number; titre: string | null }[]
 }
 
-export const MAISON_SECTEURS: Record<string, SecteurStats> = (() => {
-  const byHood: Record<string, { pm2s: number[]; biens: { prix: number; surface: number; titre: string | null }[] }> = {}
-  for (const m of MAISONS) {
-    if (!m.prix || !m.surface) continue
-    const h = m.neighbourhood
-    if (!byHood[h]) byHood[h] = { pm2s: [], biens: [] }
-    byHood[h].pm2s.push(m.prix / m.surface)
-    byHood[h].biens.push({ prix: m.prix, surface: m.surface, titre: m.titre })
-  }
-  const result: Record<string, SecteurStats> = {}
-  for (const [h, d] of Object.entries(byHood)) {
-    const sorted = [...d.pm2s].sort((a, b) => a - b)
-    const mid = Math.floor(sorted.length / 2)
-    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
-    result[h] = {
-      secteur: h, n: d.biens.length,
-      medianPm2: Math.round(median),
-      minPm2: Math.round(sorted[0]),
-      maxPm2: Math.round(sorted[sorted.length - 1]),
-      biens: d.biens,
-    }
-  }
-  return result
-})()
+// Statistiques AGRÉGÉES par secteur (médiane/min/max PM² des annonces maisons),
+// générées par scripts/publish-data.mjs. Aucune annonce individuelle n'est publique.
+export const MAISON_SECTEURS: Record<string, SecteurStats> =
+  maisonSecteursRaw as unknown as Record<string, SecteurStats>
 
 export const ALL_MAISON_SECTEURS = Object.keys(MAISON_SECTEURS).sort()
 

@@ -13,16 +13,20 @@ from datetime import datetime
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-BASE  = Path(__file__).parent
+BASE  = Path(__file__).parent.parent   # project root (tools/../)
 DB    = BASE / "dvf" / "listings_market.db"
 REACT = BASE / "dashboard-react" / "src" / "data"
+# Annonces scrapées : PRIVÉES — jamais dans src/ (sinon incluses dans le bundle public).
+# Publiées vers Supabase Storage par dashboard-react/scripts/publish-data.mjs
+PRIVATE = BASE / "dashboard-react" / "private-data"
+PRIVATE.mkdir(exist_ok=True)
 CFG   = BASE / "config.json"
-STRUCTURED_IDS_FILE          = BASE / "_structured_ids.json"
-NEIGHBOURHOOD_OVERRIDES_FILE = BASE / "_neighbourhood_overrides.json"
-SURFACE_CARREZ_FILE          = BASE / "_surface_carrez_overrides.json"
+STRUCTURED_IDS_FILE          = BASE / "tools" / "_structured_ids.json"
+NEIGHBOURHOOD_OVERRIDES_FILE = BASE / "tools" / "_neighbourhood_overrides.json"
+SURFACE_CARREZ_FILE          = BASE / "tools" / "_surface_carrez_overrides.json"
 
 if not DB.exists():
-    print("ERREUR: dvf/listings_market.db introuvable — lancez d'abord bot_overnight.py")
+    print("ERREUR: dvf/listings_market.db introuvable — lancez d'abord scraper_nd.py")
     sys.exit(1)
 
 if not REACT.exists():
@@ -48,9 +52,9 @@ COMMUNE_MAP = {
 
 # DB avm_model tag → React union literal
 def map_avm_model(tag):
-    if tag in ("chamonix_apt_meta", "chamonix_mai_xgb"):
+    if tag in ("chamonix_apt_meta", "chamonix_mai_xgb", "avm_lookup"):
         return "chamonix_apt"
-    if tag == "dvf_stats":
+    if tag in ("dvf_stats", "vallee_apt"):
         return "vallee_apt"
     return None
 
@@ -108,10 +112,54 @@ def detect_renovation(titre: str | None, description: str | None) -> bool:
     return any(k in text for k in _RENO_KEYWORDS)
 
 
-def _maison_adjusted_score(raw_score: int | None, surface: float | None, needs_renovation: bool) -> int | None:
+_VOIR_PLUS_RE = re.compile(r'\s*Voir plus\s*$', re.IGNORECASE)
+
+def strip_ui_artefacts(text: str | None) -> str:
+    """Strip 'Voir plus' and similar UI artefacts from stored descriptions."""
+    if not text:
+        return ""
+    return _VOIR_PLUS_RE.sub("", text).strip()
+
+
+def baisses_bonus(nb_baisses: int | None) -> int:
+    """Bonus score pour vendeur sous pression : +5 pts si ≥2 baisses, +10 pts si ≥3."""
+    if not nb_baisses:
+        return 0
+    if nb_baisses >= 3:
+        return 10
+    if nb_baisses >= 2:
+        return 5
+    return 0
+
+
+def drop_pct_bonus(prix_initial, prix) -> int:
+    """Piste D: bonus basé sur le % de baisse total depuis prix_initial.
+    Plus fiable que nb_baisses (SeLoger remet souvent le compteur à 0)."""
+    if not prix_initial or not prix or prix_initial <= prix:
+        return 0
+    pct = (prix_initial - prix) / prix_initial * 100
+    if pct >= 20: return 15
+    if pct >= 10: return 10
+    if pct >= 5:  return 5
+    return 0
+
+
+def anciennete_penalty(jours_marche) -> int:
+    """Pénalité ancienneté : -5pts après 60j, -10pts après 120j sur le marché."""
+    if not jours_marche:
+        return 0
+    if jours_marche > 120:
+        return -10
+    if jours_marche > 60:
+        return -5
+    return 0
+
+
+def _maison_adjusted_score(raw_score: int | None, surface: float | None, needs_renovation: bool, jours_marche=None) -> int | None:
     """Pénalités qualitatives sur le score AVM maisons uniquement.
     - Petite surface : < 80m² = -10pts, 80-100m² = -5pts (atypique pour chalet alpin)
     - Rénovation détectée : -12pts
+    - Ancienneté : -5pts >60j, -10pts >120j
     """
     if raw_score is None:
         return None
@@ -123,6 +171,7 @@ def _maison_adjusted_score(raw_score: int | None, surface: float | None, needs_r
             score -= 5
     if needs_renovation:
         score -= 12
+    score += anciennete_penalty(jours_marche)
     return max(0, min(100, score))
 
 _SLUG_NEIGHBOURHOOD = {
@@ -251,7 +300,6 @@ _STRUCTURED_PRODUCT_KEYWORDS = [
     'loyer garanti', 'loyers garantis', 'revenu garanti', 'revenus garantis',
     'résidence de tourisme', 'residence de tourisme',
     'leaseback', 'occupation personnelle',
-    'investisseur patrimonial', 'investissement patrimonial',
     'gestion hôtelière', 'gestion hoteliere',
     'résidence gérée', 'residence geree',
     'gestionnaire de résidence',
@@ -265,12 +313,22 @@ _STRUCTURED_PRODUCT_KEYWORDS = [
     'résidence avec services', 'residence avec services',
     'résidence tourisme', 'residence tourisme',
     'accueil et service toute l', 'acceuil et service',
-    # LMNP / occupation propriétaire
+    # LMNP / occupation propriétaire (keywords précis pour éviter les faux positifs)
     'lmnp', 'loueur meublé non professionnel',
-    'occupation', 'semaines d\'occupation', 'semaine d\'occupation',
-    'percevrez', 'vous percevrez',
+    "semaines d'occupation", "semaine d'occupation",
+    "droit d'occupation", "votre occupation personnelle",
+    'vous percevrez', 'vous en percevrez',
     'mise en location est prise en charge',
     'prise en charge par un professionnel',
+    # Résidences gérées / lots numérotés
+    'kaméléon', 'kameléon', 'caméléon',
+    'géré par', 'gere par',
+    'lot n°', 'lot no ', 'numéro de lot',
+    'contrat de bail commercial',
+    'résidence montagne gérée',
+    'propriétaire de semaines', 'proprietaire de semaines',
+    'loyer indexé', 'loyer indexe',
+    'revenu locatif garanti',
 ]
 
 _structured_ids_blacklist: set[str] = set()
@@ -297,7 +355,9 @@ def effective_surface(total: float, carrez: float) -> float:
 def _avm_ratio_to_score(ratio) -> int | None:
     if ratio is None:
         return None
-    if ratio <= 0.75: return 95
+    if ratio <= 0.75:
+        # Piste B: continu — ratio=0.75→95, ratio=0→100. Différencie les vrais outliers.
+        return min(100, round(95 + (0.75 - ratio) / 0.75 * 5))
     if ratio <= 0.85: return 80
     if ratio <= 0.95: return 65
     if ratio <= 1.05: return 50
@@ -305,10 +365,10 @@ def _avm_ratio_to_score(ratio) -> int | None:
     if ratio <= 1.40: return 15
     return 5
 
-def is_structured_product(listing_id: str, titre: str | None, description: str | None) -> bool:
+def is_structured_product(listing_id: str, titre: str | None, description: str | None, description_full: str | None = None) -> bool:
     if listing_id in _structured_ids_blacklist:
         return True
-    text = ((titre or '') + ' ' + (description or '')).lower()
+    text = ((titre or '') + ' ' + (description or '') + ' ' + (description_full or '')).lower()
     return any(k in text for k in _STRUCTURED_PRODUCT_KEYWORDS)
 
 
@@ -365,6 +425,37 @@ def compute_yield(prix, surface, cfg_key):
     return round((surface * rent_pm2 * 12) / prix * 100, 2)
 
 
+def _yield_to_score(rendement: float | None) -> int | None:
+    """Piste A: composante yield 0-100, calibrée marché Chamonix (médiane ~2.4% → 50)."""
+    if rendement is None:
+        return None
+    if rendement >= 4.5: return 100
+    if rendement >= 3.5: return 85
+    if rendement >= 3.0: return 75
+    if rendement >= 2.5: return 65
+    if rendement >= 2.0: return 50
+    if rendement >= 1.5: return 25
+    return 5
+
+
+# Piste C: seuils prix/m² minimum par commune (en dessous = surface probablement erronée)
+_PM2_SUSPECT_MIN = {
+    "Chamonix":      4000,
+    "Les Houches":   3500,
+    "Saint-Gervais": 2500,
+    "Sallanches":    1800,
+    "Passy":         2500,
+    "Servoz":        1500,
+    "Domancy":       1500,
+}
+
+def _pm2_suspect_flag(prix, surface, cfg_key: str) -> bool:
+    """Détecte un prix/m² anormalement bas indiquant une surface probablement mal renseignée."""
+    if not prix or not surface or surface <= 0:
+        return False
+    return (prix / surface) < _PM2_SUSPECT_MIN.get(cfg_key, 1500)
+
+
 # Loyers maisons longue durée Chamonix vallée (€/m²/mois) — source marché 2025
 # SeLoger / ChacunSonLieu : maisons ~11-17€/m² selon quartier
 _MAISON_RENT_PM2: dict[str, float] = {
@@ -404,6 +495,37 @@ def compute_maison_yield(prix: float, surface: float, neighbourhood: str) -> flo
     factor   = _surface_rent_factor(surface)
     monthly  = surface * rent_pm2 * factor
     return round((monthly * 12) / prix * 100, 2)
+
+
+def _richness(item: dict, price_key: str = "price", surface_key: str = "surface") -> int:
+    """Score de richesse d'un item pour le dedup (description + photos)."""
+    desc = item.get("description", "") or ""
+    photos = item.get("photos", []) or []
+    return len(desc) + len(photos) * 50
+
+
+def deduplicate(items: list[dict], price_key: str = "price", surface_key: str = "surface",
+                price_tol: int = 2000, surface_tol: float = 2.0) -> tuple[list[dict], int]:
+    """Déduplique les annonces : même prix (±tol€) ET même surface (±tol m²).
+    Garde l'annonce la plus riche (description longue + photos)."""
+    kept: list[dict] = []
+    for item in items:
+        p = item.get(price_key, 0) or 0
+        s = item.get(surface_key, 0) or 0
+        match_idx = None
+        for i, k in enumerate(kept):
+            kp = k.get(price_key, 0) or 0
+            ks = k.get(surface_key, 0) or 0
+            if abs(kp - p) <= price_tol and abs(ks - s) <= surface_tol:
+                match_idx = i
+                break
+        if match_idx is None:
+            kept.append(item)
+        else:
+            if _richness(item, price_key, surface_key) > _richness(kept[match_idx], price_key, surface_key):
+                kept[match_idx] = item
+    removed = len(items) - len(kept)
+    return kept, removed
 
 
 con = sqlite3.connect(DB)
@@ -450,13 +572,34 @@ for row in con.execute(
     # Recompute AVM with effective surface when carrez override is known
     avm_pred_raw   = row["avm_pred"]
     avm_ratio_raw  = row["avm_ratio"]
-    avm_score_raw  = row["avm_score"]
     if carrez and surface_total and avm_pred_raw:
         avm_pred_eff  = avm_pred_raw * (surf_eff / surface_total)
         avm_ratio_eff = round(prix / avm_pred_eff, 3) if prix and avm_pred_eff else avm_ratio_raw
-        avm_score_eff = _avm_ratio_to_score(avm_ratio_eff)
     else:
-        avm_pred_eff, avm_ratio_eff, avm_score_eff = avm_pred_raw, avm_ratio_raw, avm_score_raw
+        avm_pred_eff, avm_ratio_eff = avm_pred_raw, avm_ratio_raw
+    # Piste B: toujours recomputer depuis le ratio pour appliquer la formule continue
+    avm_score_eff = _avm_ratio_to_score(avm_ratio_eff)
+
+    pm2_suspect    = _pm2_suspect_flag(prix, surf_eff, cfg_key)
+    # Fix 1: yield non calculable si surface suspecte (évite un yield trompeur style 11%)
+    rendement      = None if pm2_suspect else compute_yield(prix, surf_eff, cfg_key)
+    yield_score    = _yield_to_score(rendement)
+    penalty        = anciennete_penalty(row["jours_marche"])
+    prix_drop_bon  = drop_pct_bonus(prix_initial, prix)
+    is_struct      = is_structured_product(row["id"], row["titre"], row["description"], row["description_full"])
+    malus_struct   = -20 if is_struct else 0
+
+    if avm_score_eff is not None:
+        # Piste A: composite 70% AVM + 30% yield (quand yield dispo, sinon 100% AVM)
+        base_score  = round(avm_score_eff * 0.70 + yield_score * 0.30) if yield_score is not None else avm_score_eff
+        raw_final   = base_score + penalty + prix_drop_bon + malus_struct
+        # Piste C: cap à 50 si prix/m² suspect (surface probablement erronée → AVM biaisé)
+        if pm2_suspect:
+            raw_final = min(raw_final, 50)
+        final_score = max(5, min(100, raw_final))
+    else:
+        base_score = final_score = None
+    desc_clean = strip_ui_artefacts(row["description_full"] or row["description"] or "")
 
     listings.append({
         "id":                   row["id"],
@@ -471,9 +614,10 @@ for row in con.execute(
         "charges":              None,
         "dpe":                  row["dpe"] or "N/C",
         "ges":                  None,
-        "score":                avm_score_eff,
+        "score":                final_score,
+        "score_detail":         {"avm": avm_score_eff, "yield_score": yield_score, "base": base_score, "anciennete": penalty, "drop_pct": prix_drop_bon, "structured": malus_struct, "pm2_suspect": pm2_suspect},
         "reasons":              [],
-        "yield":                compute_yield(prix, surf_eff, cfg_key),
+        "yield":                rendement,
         "vs_market":            None,
         "enriched":             0,
         "first_seen":           row["first_seen"] or today,
@@ -488,24 +632,42 @@ for row in con.execute(
         "avm_pred":             avm_pred_eff,
         "avm_ratio":            avm_ratio_eff,
         "avm_model":            map_avm_model(row["avm_model"]),
+        "avm_suspect":          bool((avm_ratio_eff is not None and avm_ratio_eff < 0.3) or pm2_suspect),
         "nb_baisses":           row["nb_baisses"] or 0,
         "photos":               filter_photos(json.loads(row["photos_json"]) if row["photos_json"] else []),
-        "is_structured":        is_structured_product(row["id"], row["titre"], row["description"]),
+        "is_structured":        is_struct,
+        "description":          desc_clean,
     })
 
-out_listings = REACT / "listings.json"
+listings, dedup_removed = deduplicate(listings, price_key="price", surface_key="surface")
+out_listings = PRIVATE / "listings.json"
 out_listings.write_text(json.dumps(listings, ensure_ascii=False, indent=2), encoding="utf-8")
-print(f"✓ listings.json — {len(listings)} appartements")
+print(f"✓ listings.json — {len(listings)} appartements ({dedup_removed} doublons supprimés)")
 
 # ── Maisons ───────────────────────────────────────────────────────────────────
 maisons = []
 for row in con.execute(
-    "SELECT * FROM listings WHERE type_bien='maison' AND active=1 AND surf_terrain > 0 AND commune != 'LES HOUCHES' ORDER BY first_seen DESC"
+    "SELECT * FROM listings WHERE type_bien='maison' AND active=1 AND commune != 'LES HOUCHES' ORDER BY first_seen DESC"
 ):
     ph = ph_by_id.get(row["id"], [])
     m_neighbourhood = detect_neighbourhood(row["adresse_raw"], row["url"], row["description"] or '', row["id"], row["titre"] or '')
     if m_neighbourhood == 'Les Houches':
         continue
+    m_reno           = detect_renovation(row["titre"], row["description"])
+    m_struct         = is_structured_product(row["id"], row["titre"], row["description"], row["description_full"] if "description_full" in row.keys() else None)
+    # Fix 2: score continu pour maisons — recomputer depuis ratio (Piste B)
+    m_avm_score_cont = _avm_ratio_to_score(row["avm_ratio"])
+    m_raw_score      = _maison_adjusted_score(m_avm_score_cont, row["surface"], m_reno, row["jours_marche"])
+    m_prix_initial   = row["prix_initial"] if "prix_initial" in row.keys() and row["prix_initial"] else row["prix"]
+    m_bonus          = drop_pct_bonus(m_prix_initial, row["prix"])
+    m_malus          = -20 if m_struct else 0
+    m_pm2_suspect    = bool(row["prix"] and row["surface"] and row["surface"] > 0 and (row["prix"] / row["surface"]) < 1500)
+    raw_m_final      = None if m_raw_score is None else m_raw_score + m_bonus + m_malus
+    if raw_m_final is not None and m_pm2_suspect:
+        raw_m_final  = min(raw_m_final, 50)
+    m_score          = None if raw_m_final is None else max(5, min(100, raw_m_final))
+    m_desc           = strip_ui_artefacts(row["description_full"] or row["description"] or "")
+
     maisons.append({
         "id":             abs(hash(row["id"])) % 1_000_000,
         "url":            row["url"],
@@ -514,7 +676,7 @@ for row in con.execute(
         "section":        _section_from_url(row["url"] or ""),
         "neighbourhood":  m_neighbourhood,
         "surface":        row["surface"] or 0,
-        "surf_terrain":   row["surf_terrain"],
+        "surf_terrain":   row["surf_terrain"] or None,
         "pieces":         row["pieces"] or 0,
         "prix":           row["prix"] or 0,
         "prix_initial":   row["prix_initial"] or row["prix"] or 0,
@@ -522,26 +684,24 @@ for row in con.execute(
         "historique_prix": ph,
         "avm_pred":       row["avm_pred"],
         "avm_ratio":      row["avm_ratio"],
-        "avm_score":      _maison_adjusted_score(
-                              row["avm_score"],
-                              row["surface"],
-                              detect_renovation(row["titre"], row["description"]),
-                          ),
+        "avm_score":      m_score,
         "first_seen":     row["first_seen"] or today,
         "notes":          row["notes"],
         "lat":            None,
         "lon":            None,
         "photos":         filter_photos(json.loads(row["photos_json"]) if row["photos_json"] else []),
-        "description":    row["description"] or "",
-        "needs_renovation": detect_renovation(row["titre"], row["description"]),
-        "is_structured":  is_structured_product(row["id"], row["titre"], row["description"]),
+        "description":    m_desc,
+        "needs_renovation": m_reno,
+        "is_structured":  m_struct,
+        "avm_suspect":    bool((row["avm_ratio"] is not None and row["avm_ratio"] < 0.3) or m_pm2_suspect),
         "yield":          compute_maison_yield(row["prix"] or 0, row["surface"] or 0, m_neighbourhood),
         "avm_model":      map_avm_model(row["avm_model"]) if "avm_model" in row.keys() else None,
     })
 
-out_maisons = REACT / "maisons.json"
+maisons, dedup_removed_m = deduplicate(maisons, price_key="prix", surface_key="surface", price_tol=3000, surface_tol=4.0)
+out_maisons = PRIVATE / "maisons.json"
 out_maisons.write_text(json.dumps(maisons, ensure_ascii=False, indent=2), encoding="utf-8")
-print(f"✓ maisons.json — {len(maisons)} maisons")
+print(f"✓ maisons.json — {len(maisons)} maisons ({dedup_removed_m} doublons supprimés)")
 
 con.close()
 

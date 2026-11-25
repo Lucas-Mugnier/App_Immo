@@ -1,0 +1,86 @@
+{
+  "Argentière": {
+    "secteur": "Argentière",
+    "n": 11,
+    "medianPm2": 12000,
+    "minPm2": 9369,
+    "maxPm2": 16879
+  },
+  "Chamonix Centre": {
+    "secteur": "Chamonix Centre",
+    "n": 146,
+    "medianPm2": 9217,
+    "minPm2": 668,
+    "maxPm2": 22222
+  },
+  "Domancy": {
+    "secteur": "Domancy",
+    "n": 4,
+    "medianPm2": 8354,
+    "minPm2": 4912,
+    "maxPm2": 11725
+  },
+  "Les Bossons": {
+    "secteur": "Les Bossons",
+    "n": 15,
+    "medianPm2": 9255,
+    "minPm2": 6500,
+    "maxPm2": 17000
+  },
+  "Les Gaillands": {
+    "secteur": "Les Gaillands",
+    "n": 7,
+    "medianPm2": 14096,
+    "minPm2": 5650,
+    "maxPm2": 22013
+  },
+  "Les Praz": {
+    "secteur": "Les Praz",
+    "n": 8,
+    "medianPm2": 16707,
+    "minPm2": 7795,
+    "maxPm2": 22533
+  },
+  "Les Pélerins": {
+    "secteur": "Les Pélerins",
+    "n": 2,
+    "medianPm2": 3397,
+    "minPm2": 1491,
+    "maxPm2": 5303
+  },
+  "Les Tines": {
+    "secteur": "Les Tines",
+    "n": 7,
+    "medianPm2": 11471,
+    "minPm2": 8453,
+    "maxPm2": 16732
+  },
+  "Montroc": {
+    "secteur": "Montroc",
+    "n": 1,
+    "medianPm2": 11538,
+    "minPm2": 11538,
+    "maxPm2": 11538
+  },
+  "Passy": {
+    "secteur": "Passy",
+    "n": 7,
+    "medianPm2": 5500,
+    "minPm2": 2200,
+    "maxPm2": 11393
+  },
+  "Saint-Gervais": {
+    "secteur": "Saint-Gervais",
+    "n": 43,
+    "medianPm2": 5985,
+    "minPm2": 1225,
+    "maxPm2": 12667
+  },
+  "Sallanches": {
+    "secteur": "Sallanches",
+    "n": 29,
+    "medianPm2": 4416,
+    "minPm2": 2000,
+    "maxPm2": 12308
+  }
+}

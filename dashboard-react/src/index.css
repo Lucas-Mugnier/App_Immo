@@ -1,5 +1,5 @@
-﻿/* ── Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* ── Fonts ── */
+/* Polices auto-hébergées via @fontsource (cf. main.tsx) — plus d'appel à Google Fonts */
 
 @tailwind base;
 @tailwind components;
@@ -6100,3 +6100,55 @@ a.an-detail-title:hover { text-decoration: underline; color: var(--accent); }
   color: var(--text-dim);
   font-size: 0.9rem;
 }
+
+/* ── Accès public / invité ─────────────────────────────────────────────── */
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: oklch(0 0 0 / 0.45);
+  backdrop-filter: blur(3px);
+}
+.login-overlay .login-card { position: relative; max-height: calc(100dvh - 48px); overflow-y: auto; }
+.login-close {
+  position: absolute; top: 10px; right: 10px;
+  display: grid; place-items: center;
+  width: 28px; height: 28px;
+  border: none; border-radius: var(--radius-xs);
+  background: transparent; color: var(--text-faint); cursor: pointer;
+}
+.login-close:hover { background: var(--surface-3); color: var(--text); }
+.login-intro { font-size: 0.85rem; color: var(--text-dim); text-align: center; margin: -10px 0 18px; }
+.login-btn-primary, .login-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+.about-card { max-width: 520px; }
+.about-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.about-card h3 { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 16px 0 4px; }
+.about-card p { font-size: 0.85rem; line-height: 1.55; color: var(--text-dim); }
+
+.locked-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+.locked-card {
+  max-width: 440px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 28px 24px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+  color: var(--text-dim);
+}
+.locked-card svg:first-child { color: var(--accent); }
+.locked-card h2 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.locked-card p { font-size: 0.88rem; line-height: 1.55; }
+.locked-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+.tab-btn--locked { opacity: 0.6; }
+.tab-loading { flex: 1; display: grid; place-items: center; color: var(--text-faint); font-size: 0.85rem; }
+
+.public-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.public-intro-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.public-intro-text { font-size: 0.88rem; line-height: 1.55; color: var(--text-dim); max-width: 640px; }
+.public-intro-actions { display: flex; gap: 10px; flex-wrap: wrap; }

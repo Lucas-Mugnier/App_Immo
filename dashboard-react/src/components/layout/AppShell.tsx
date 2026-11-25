@@ -1,17 +1,18 @@
 import { useEffect } from 'react'
-import { useStore, useIsAdmin } from '@/store/useStore'
+import { useStore, useIsAdmin, useHasPrivateData } from '@/store/useStore'
 import { signOut } from '@/lib/supabase'
 import type { TabId } from '@/types'
 import { cn } from '@/lib/utils'
-import { BarChart2, Scale, LineChart, Moon, Sun, Building2, ShieldCheck, BookOpen, User, LogOut } from 'lucide-react'
+import { BarChart2, Scale, LineChart, Moon, Sun, Building2, ShieldCheck, BookOpen, User, LogOut, LogIn, Lock, Info } from 'lucide-react'
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'biens',       label: 'Biens',        icon: <Building2 size={13} /> },
-  { id: 'insights',    label: 'Insights',     icon: <BarChart2 size={13} /> },
-  { id: 'comparateur', label: 'Comparateur',  icon: <Scale size={13} /> },
-  { id: 'analyse',     label: 'Analyse',      icon: <LineChart size={13} /> },
+// Ordre : onglets publics d'abord, puis onglets réservés (annonces).
+const TABS: { id: TabId; label: string; icon: React.ReactNode; private?: boolean }[] = [
+  { id: 'insights',    label: 'Marché',       icon: <BarChart2 size={13} /> },
   { id: 'apprendre',   label: "S'instruire",  icon: <BookOpen size={13} /> },
-  { id: 'profil',      label: 'Profil',       icon: <User size={13} /> },
+  { id: 'biens',       label: 'Biens',        icon: <Building2 size={13} />, private: true },
+  { id: 'comparateur', label: 'Comparateur',  icon: <Scale size={13} />, private: true },
+  { id: 'analyse',     label: 'Analyse',      icon: <LineChart size={13} />, private: true },
+  { id: 'profil',      label: 'Profil',       icon: <User size={13} />, private: true },
 ]
 
 interface Props {
@@ -21,8 +22,9 @@ interface Props {
 }
 
 export function AppShell({ children, apportCount, maisonCount }: Props) {
-  const { activeTab, setActiveTab, dark, setDark } = useStore()
+  const { activeTab, setActiveTab, dark, setDark, session, setLoginOpen, setAboutOpen } = useStore()
   const isAdmin = useIsAdmin()
+  const hasData = useHasPrivateData()
 
   // migrate legacy persisted tab values
   const LEGACY: Record<string, TabId> = { apparts: 'biens', maisons: 'biens', simulation: 'analyse', optimiseur: 'analyse' }
@@ -105,15 +107,16 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
           {/* Left — counts */}
           <div className="header-left">
             {apportCount != null && (
-              <span className="num text-faint" style={{ fontSize: '11px' }}>
-                {apportCount}A · {maisonCount}M
+              <span className="num text-faint" style={{ fontSize: '11px' }}
+                title={`${apportCount} appartements · ${maisonCount} maisons en vente`}>
+                {apportCount} apparts · {maisonCount} maisons
               </span>
             )}
           </div>
 
           {/* Centre — logo in glass pill */}
           <div className="header-logo-glass">
-            <img src="/logo.png" alt="ALPESTATE" className="header-logo-img" />
+            <img src="/logo.png" alt="Alpestate — immobilier Chamonix" className="header-logo-img" />
           </div>
 
           {/* Right — controls */}
@@ -133,12 +136,31 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
             </button>
             <button
               className="theme-toggle"
-              onClick={() => signOut()}
-              title="Se déconnecter"
-              aria-label="Se déconnecter"
+              onClick={() => setAboutOpen(true)}
+              title="À propos & mentions légales"
+              aria-label="À propos et mentions légales"
             >
-              <LogOut size={14} />
+              <Info size={14} />
             </button>
+            {session ? (
+              <button
+                className="theme-toggle"
+                onClick={() => signOut()}
+                title={`Se déconnecter (${session.user.email})`}
+                aria-label="Se déconnecter"
+              >
+                <LogOut size={14} />
+              </button>
+            ) : (
+              <button
+                className="theme-toggle"
+                onClick={() => setLoginOpen(true)}
+                title="Se connecter (accès invité)"
+                aria-label="Se connecter"
+              >
+                <LogIn size={14} />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -148,10 +170,12 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
         {TABS.filter((t) => t.id !== 'profil').map((tab) => (
           <button
             key={tab.id}
-            className={cn('tab-btn', resolvedTab === tab.id && 'active')}
+            className={cn('tab-btn', resolvedTab === tab.id && 'active', tab.private && !hasData && 'tab-btn--locked')}
             onClick={() => setActiveTab(tab.id)}
+            aria-current={resolvedTab === tab.id ? 'page' : undefined}
+            title={tab.private && !hasData ? 'Réservé aux comptes invités' : undefined}
           >
-            {tab.icon}
+            {tab.private && !hasData ? <Lock size={12} /> : tab.icon}
             <span>{tab.label}</span>
           </button>
         ))}
@@ -166,13 +190,16 @@ export function AppShell({ children, apportCount, maisonCount }: Props) {
           </button>
         )}
         <div style={{ flex: 1 }} />
-        <button
-          className={cn('tab-btn', resolvedTab === 'profil' && 'active')}
-          onClick={() => setActiveTab('profil')}
-        >
-          <User size={13} />
-          <span>Profil</span>
-        </button>
+        {hasData && (
+          <button
+            className={cn('tab-btn', resolvedTab === 'profil' && 'active')}
+            onClick={() => setActiveTab('profil')}
+            aria-current={resolvedTab === 'profil' ? 'page' : undefined}
+          >
+            <User size={13} />
+            <span>Profil</span>
+          </button>
+        )}
       </nav>
 
       {/* Content */}

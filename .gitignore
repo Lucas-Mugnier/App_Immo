@@ -3,10 +3,10 @@
 __pycache__/
 *.pyc
 dvf/*
-!dvf/listings_market.db
 node_modules/
 dist/
 .claude/
 test_*.png
 sessions/
 *.log
+dashboard-react/private-data/

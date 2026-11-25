@@ -1,6 +1,4 @@
 import type { Listing, Maison } from '@/types'
-import listingsRaw from '@/data/listings.json'
-import maisonsRaw from '@/data/maisons.json'
 import dvfRaw from '@/data/dvf_stats.json'
 import dvfPointsRaw from '@/data/dvf_points.json'
 
@@ -12,22 +10,27 @@ import dvfPointsRaw from '@/data/dvf_points.json'
  */
 export const MARKET_SCOPE = ['Chamonix', 'Argentiere', 'Argentière'] as const
 
-const ALL_LISTINGS = listingsRaw as unknown as Listing[]
+/*
+ * Données PRIVÉES (annonces scrapées) : elles ne sont JAMAIS incluses dans le
+ * bundle public. Elles sont téléchargées après connexion d'un compte autorisé
+ * (voir lib/privateData.ts) puis injectées ici via setPrivateData().
+ * Les exports `let` sont des live bindings ES : les modules qui lisent APPARTS
+ * au moment du rendu voient les nouvelles valeurs. Les onglets privés sont
+ * chargés en lazy APRÈS l'injection, donc leur code module-level aussi.
+ */
+export let APPARTS: Listing[] = []
+export let APPARTS_HORS_SCOPE: Listing[] = []
+export let MAISONS: Maison[] = []
 
-export const APPARTS: Listing[] = ALL_LISTINGS.filter((r) =>
-  (MARKET_SCOPE as readonly string[]).includes(r.location),
-)
+export const COUNTS = { apparts: 0, maisons: 0, horsScope: 0 }
 
-export const APPARTS_HORS_SCOPE: Listing[] = ALL_LISTINGS.filter(
-  (r) => !(MARKET_SCOPE as readonly string[]).includes(r.location),
-)
-
-export const MAISONS: Maison[] = maisonsRaw as unknown as Maison[]
-
-export const COUNTS = {
-  apparts: APPARTS.length,
-  maisons: MAISONS.length,
-  horsScope: APPARTS_HORS_SCOPE.length,
+export function setPrivateData(listings: Listing[], maisons: Maison[]) {
+  APPARTS = listings.filter((r) => (MARKET_SCOPE as readonly string[]).includes(r.location))
+  APPARTS_HORS_SCOPE = listings.filter((r) => !(MARKET_SCOPE as readonly string[]).includes(r.location))
+  MAISONS = maisons
+  COUNTS.apparts = APPARTS.length
+  COUNTS.maisons = MAISONS.length
+  COUNTS.horsScope = APPARTS_HORS_SCOPE.length
 }
 
 export interface DvfCommuneYear {

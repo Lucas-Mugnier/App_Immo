@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore")
 
 BASE     = Path(__file__).parent
 DVF_DIR  = BASE / "dvf"
-DASH_DIR = BASE / "dashboard-react" / "src" / "data"
+DASH_DIR = BASE / "dashboard-react" / "private-data"
 
 # ── Négociation implicite : les prix demandés → prix transaction estimé
 LISTING_NEGO_DISCOUNT = 0.04   # -4% en moyenne Chamonix

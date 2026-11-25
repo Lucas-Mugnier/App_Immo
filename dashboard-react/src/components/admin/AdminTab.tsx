@@ -1,54 +1,9 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle, XCircle, RefreshCw, Download, ExternalLink, RotateCcw, PlayCircle } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, Download, ExternalLink, RotateCcw } from 'lucide-react'
 import {
   fetchAllCorrections, updateCorrectionStatus, supabase,
   FIELD_LABELS, type Correction,
 } from '@/lib/supabase'
-
-const GITHUB_ACTIONS_URL = 'https://github.com/Lucas-Mugnier/immo-radar/actions'
-
-function RefreshDataButton() {
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
-
-  async function handleClick() {
-    if (!supabase) return
-    setState('loading')
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    if (!token) { setState('error'); return }
-    try {
-      const res = await fetch('/api/refresh', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setState(res.ok ? 'ok' : 'error')
-    } catch {
-      setState('error')
-    }
-  }
-
-  return (
-    <div className="admin-refresh">
-      <button className="admin-tool-btn" onClick={handleClick} disabled={state === 'loading'}>
-        <PlayCircle size={13} />
-        <span>{state === 'loading' ? 'Lancement…' : 'Actualiser les données'}</span>
-      </button>
-      {state === 'ok' && (
-        <span className="admin-refresh-status admin-refresh-status--ok">
-          Scraping lancé (~30 min) —{' '}
-          <a href={GITHUB_ACTIONS_URL} target="_blank" rel="noopener noreferrer">
-            suivre sur GitHub <ExternalLink size={11} />
-          </a>
-        </span>
-      )}
-      {state === 'error' && (
-        <span className="admin-refresh-status admin-refresh-status--error">
-          Échec du déclenchement, réessaie.
-        </span>
-      )}
-    </div>
-  )
-}
 
 const STATUS_LABEL: Record<string, string> = {
   pending:  'En attente',
@@ -114,7 +69,6 @@ export function AdminTab() {
           )}
         </div>
         <div className="admin-toolbar">
-          <RefreshDataButton />
           <button className="admin-tool-btn" onClick={load} disabled={loading} title="Rafraîchir">
             <RefreshCw size={13} className={loading ? 'spinning' : ''} />
           </button>

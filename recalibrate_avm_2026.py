@@ -29,7 +29,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 BASE     = Path(__file__).parent
 DB       = BASE / "dvf" / "listings_market.db"
-DASH_DIR = BASE / "dashboard-react" / "src" / "data"
+DASH_DIR = BASE / "dashboard-react" / "private-data"
 AUDIT    = BASE / "_avm_market_correction.json"
 
 NEGO_DISCOUNT   = 0.04   # décote négociation implicite

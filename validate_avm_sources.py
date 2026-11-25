@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 
 BASE     = Path(__file__).parent
 DVF_DIR  = BASE / "dvf"
-DASH_DIR = BASE / "dashboard-react" / "src" / "data"
+DASH_DIR = BASE / "dashboard-react" / "private-data"
 
 LISTING_NEGO_DISCOUNT = 0.04
 ANNEE_REF             = 2024

@@ -8,6 +8,7 @@ import type {
 } from '@/types'
 import type { ProfilAcquisition } from '@/lib/optimizer'
 import { ADMIN_EMAIL } from '@/lib/supabase'
+import type { PrivateDataStatus } from '@/lib/privateData'
 
 const STORAGE_KEY = 'appart-alert-state'
 
@@ -15,6 +16,18 @@ interface StoreState {
   // Auth session (not persisted — supabase-js already persists its own session)
   session: Session | null
   setSession: (s: Session | null) => void
+
+  // Données privées (annonces) — non persistées
+  dataStatus: PrivateDataStatus
+  setDataStatus: (s: PrivateDataStatus) => void
+  dataVersion: number
+  bumpDataVersion: () => void
+
+  // Modales globales
+  loginOpen: boolean
+  setLoginOpen: (o: boolean) => void
+  aboutOpen: boolean
+  setAboutOpen: (o: boolean) => void
 
   // Theme
   dark: boolean
@@ -149,10 +162,20 @@ export const useStore = create<StoreState>()(
       session: null,
       setSession: (s) => set({ session: s }),
 
+      dataStatus: 'anon',
+      setDataStatus: (st) => set({ dataStatus: st }),
+      dataVersion: 0,
+      bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
+
+      loginOpen: false,
+      setLoginOpen: (o) => set({ loginOpen: o }),
+      aboutOpen: false,
+      setAboutOpen: (o) => set({ aboutOpen: o }),
+
       dark: localStorage.getItem('alpestate-theme') === 'dark',
       setDark: (d) => set({ dark: d }),
 
-      activeTab: 'biens',
+      activeTab: 'insights',
       setActiveTab: (tab) => set({ activeTab: tab }),
       bienTypes: ['apparts'],
       toggleBienType: (t) => set((s) => {
@@ -279,5 +302,9 @@ export const useStore = create<StoreState>()(
   )
 )
 
+// Affichage seulement : les droits réels (lecture des annonces, modération) sont
+// appliqués côté Supabase par les policies RLS, pas par ce test client.
 export const useIsAdmin = () =>
-  useStore((s) => !!s.session?.user.email && s.session.user.email === ADMIN_EMAIL)
+  useStore((s) => s.dataStatus === 'ready' && !!s.session?.user.email && s.session.user.email === ADMIN_EMAIL)
+
+export const useHasPrivateData = () => useStore((s) => s.dataStatus === 'ready')
