@@ -11,7 +11,7 @@ import dvfPointsRaw from '@/data/dvf_points.json'
 export const MARKET_SCOPE = ['Chamonix', 'Argentiere', 'Argentière'] as const
 
 /*
- * Données PRIVÉES (annonces scrapées) : elles ne sont JAMAIS incluses dans le
+ * Données PRIVÉES (annonces collectées) : elles ne sont JAMAIS incluses dans le
  * bundle public. Elles sont téléchargées après connexion d'un compte autorisé
  * (voir lib/privateData.ts) puis injectées ici via setPrivateData().
  * Les exports `let` sont des live bindings ES : les modules qui lisent APPARTS

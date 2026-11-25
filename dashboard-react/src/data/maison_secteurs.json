@@ -3,84 +3,84 @@
     "secteur": "Argentière",
     "n": 11,
     "medianPm2": 12000,
-    "minPm2": 9369,
-    "maxPm2": 16879
+    "minPm2": 9400,
+    "maxPm2": 16900
   },
   "Chamonix Centre": {
     "secteur": "Chamonix Centre",
     "n": 146,
-    "medianPm2": 9217,
-    "minPm2": 668,
-    "maxPm2": 22222
+    "medianPm2": 9200,
+    "minPm2": 700,
+    "maxPm2": 22200
   },
   "Domancy": {
     "secteur": "Domancy",
     "n": 4,
-    "medianPm2": 8354,
-    "minPm2": 4912,
-    "maxPm2": 11725
+    "medianPm2": 8400,
+    "minPm2": 4900,
+    "maxPm2": 11700
   },
   "Les Bossons": {
     "secteur": "Les Bossons",
     "n": 15,
-    "medianPm2": 9255,
+    "medianPm2": 9300,
     "minPm2": 6500,
     "maxPm2": 17000
   },
   "Les Gaillands": {
     "secteur": "Les Gaillands",
     "n": 7,
-    "medianPm2": 14096,
-    "minPm2": 5650,
-    "maxPm2": 22013
+    "medianPm2": 14100,
+    "minPm2": 5600,
+    "maxPm2": 22000
   },
   "Les Praz": {
     "secteur": "Les Praz",
     "n": 8,
-    "medianPm2": 16707,
-    "minPm2": 7795,
-    "maxPm2": 22533
+    "medianPm2": 16700,
+    "minPm2": 7800,
+    "maxPm2": 22500
   },
   "Les Pélerins": {
     "secteur": "Les Pélerins",
-    "n": 2,
-    "medianPm2": 3397,
-    "minPm2": 1491,
-    "maxPm2": 5303
+    "n": 0,
+    "medianPm2": 0,
+    "minPm2": 0,
+    "maxPm2": 0
   },
   "Les Tines": {
     "secteur": "Les Tines",
     "n": 7,
-    "medianPm2": 11471,
-    "minPm2": 8453,
-    "maxPm2": 16732
+    "medianPm2": 11500,
+    "minPm2": 8500,
+    "maxPm2": 16700
   },
   "Montroc": {
     "secteur": "Montroc",
-    "n": 1,
-    "medianPm2": 11538,
-    "minPm2": 11538,
-    "maxPm2": 11538
+    "n": 0,
+    "medianPm2": 0,
+    "minPm2": 0,
+    "maxPm2": 0
   },
   "Passy": {
     "secteur": "Passy",
     "n": 7,
     "medianPm2": 5500,
     "minPm2": 2200,
-    "maxPm2": 11393
+    "maxPm2": 11400
   },
   "Saint-Gervais": {
     "secteur": "Saint-Gervais",
     "n": 43,
-    "medianPm2": 5985,
-    "minPm2": 1225,
-    "maxPm2": 12667
+    "medianPm2": 6000,
+    "minPm2": 1200,
+    "maxPm2": 12700
   },
   "Sallanches": {
     "secteur": "Sallanches",
     "n": 29,
-    "medianPm2": 4416,
+    "medianPm2": 4400,
     "minPm2": 2000,
-    "maxPm2": 12308
+    "maxPm2": 12300
   }
 }

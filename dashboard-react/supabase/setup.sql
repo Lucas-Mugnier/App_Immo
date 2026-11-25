@@ -53,6 +53,21 @@ create policy "private-data: lecture invites" on storage.objects
   using (bucket_id = 'private-data' and public.is_allowed());
 
 -- 3. Corrections communautaires ───────────────────────────────────────────────
+create table if not exists public.corrections (
+  id              uuid primary key default gen_random_uuid(),
+  listing_id      text not null,
+  listing_url     text,
+  listing_title   text,
+  field           text not null,
+  current_value   text,
+  suggested_value text not null check (char_length(suggested_value) <= 500),
+  comment         text check (char_length(comment) <= 2000),
+  reporter_name   text check (char_length(reporter_name) <= 100),
+  status          text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at      timestamptz not null default now(),
+  reviewed_at     timestamptz
+);
+create index if not exists corrections_listing_idx on public.corrections (listing_id);
 alter table public.corrections enable row level security;
 
 -- Supprime toute policy existante sur la table (y compris d'éventuelles policies

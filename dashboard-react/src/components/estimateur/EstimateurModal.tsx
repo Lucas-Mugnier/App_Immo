@@ -115,7 +115,7 @@ export function EstimateurModal() {
   const dvfAffined = dvfBase  ? avmAffineMaison(dvfBase, etat, vue, surfTerrain, parking) : null
   const dvfStats   = getMaisonDvfStats(secteur)
 
-  // Modèle 2 : Annonces en cours
+  // Modèle 2 : échantillon de biens sur le marché (stats agrégées et lissées)
   const annBase    = isMaison ? avmMaisonAnnonces(secteur, surface) : null
   const annAffined = annBase  ? avmAffineMaison(annBase, etat, vue, surfTerrain, parking) : null
   const annStats   = MAISON_SECTEURS[secteur]
@@ -280,19 +280,19 @@ export function EstimateurModal() {
                       const stats = MAISON_SECTEURS[s]
                       return (
                         <option key={s} value={s}>
-                          {s} — {stats.n} annonce{stats.n > 1 ? 's' : ''} · {stats.medianPm2.toLocaleString('fr-FR')} €/m²
+                          {stats.n > 0 ? `${s} — ~${stats.medianPm2.toLocaleString('fr-FR')} €/m²` : s}
                         </option>
                       )
                     })}
                   </select>
                 </div>
-                {annStats && (
+                {annStats && annStats.n > 0 && (
                   <div className="est-secteur-badge">
                     <span className="est-secteur-pm2">{annStats.medianPm2.toLocaleString('fr-FR')} €/m²</span>
                     <span className="est-secteur-range">
                       [{annStats.minPm2.toLocaleString('fr-FR')} – {annStats.maxPm2.toLocaleString('fr-FR')}]
                     </span>
-                    <span className="est-secteur-n">{annStats.n} biens</span>
+                    <span className="est-secteur-n">échantillon · {annStats.n} biens</span>
                   </div>
                 )}
               </div>
@@ -345,8 +345,8 @@ export function EstimateurModal() {
                   color="oklch(0.65 0.18 275)"
                 />
                 <ModelCard
-                  title="Modèle annonces"
-                  subtitle={`Annonces en cours · ${secteur}`}
+                  title="Modèle échantillon"
+                  subtitle={`Échantillon de biens sur le marché · ${secteur}`}
                   base={annBase}
                   affined={annAffined}
                   n={annStats?.n ?? 0}
@@ -380,7 +380,7 @@ export function EstimateurModal() {
                 <Info size={11} className="mt-0.5 flex-shrink-0" />
                 <span>
                   <b>DVF :</b> basé sur {dvfStats?.n ?? '—'} ventes notariales (Chamonix Mont-Blanc) ·{' '}
-                  <b>Annonces :</b> médiane PM² des {annStats?.n ?? 0} biens en cours dans ce secteur ·
+                  <b>Échantillon :</b> médiane PM² lissée d'un échantillon de biens actuellement sur le marché{annStats?.n ? ` (${annStats.n} dans ce secteur)` : ''} ·
                   Modèles indicatifs, précision ±15–25 % · Consulter un expert avant toute décision
                 </span>
               </div>

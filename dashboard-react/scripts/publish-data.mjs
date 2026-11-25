@@ -50,17 +50,23 @@ if (!Array.isArray(listings) || !Array.isArray(maisons) || listings.length === 0
   process.exit(1)
 }
 
-// ── 1. Agrégats publics (aucune annonce individuelle) ───────────────────────
+// ── 1. Agrégats publics lissés (« échantillon », aucune annonce individuelle) ──
 const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
 const byHood = {}
 for (const m of maisons) {
   if (!m.prix || !m.surface) continue
   ;(byHood[m.neighbourhood] ??= []).push(m.prix / m.surface)
 }
+// Lissage : PM² arrondis à la centaine, et secteurs de moins de MIN_N biens masqués
+// (stats à zéro) pour qu'aucun bien individuel ne soit identifiable.
+const MIN_N = 3
+const r100 = (x) => Math.round(x / 100) * 100
 const secteurs = {}
 for (const h of Object.keys(byHood).sort()) {
   const v = byHood[h]
-  secteurs[h] = { secteur: h, n: v.length, medianPm2: Math.round(median(v)), minPm2: Math.round(Math.min(...v)), maxPm2: Math.round(Math.max(...v)) }
+  secteurs[h] = v.length >= MIN_N
+    ? { secteur: h, n: v.length, medianPm2: r100(median(v)), minPm2: r100(Math.min(...v)), maxPm2: r100(Math.max(...v)) }
+    : { secteur: h, n: 0, medianPm2: 0, minPm2: 0, maxPm2: 0 }
 }
 const secPath = join(ROOT, 'src/data/maison_secteurs.json')
 const before = existsSync(secPath) ? readFileSync(secPath, 'utf8') : ''
