@@ -3,43 +3,43 @@
     "secteur": "Argentière",
     "n": 11,
     "medianPm2": 12000,
-    "minPm2": 9400,
-    "maxPm2": 16900
+    "minPm2": 10000,
+    "maxPm2": 15400
   },
   "Chamonix Centre": {
     "secteur": "Chamonix Centre",
     "n": 146,
     "medianPm2": 9200,
-    "minPm2": 700,
-    "maxPm2": 22200
+    "minPm2": 4000,
+    "maxPm2": 16600
   },
   "Domancy": {
     "secteur": "Domancy",
     "n": 4,
     "medianPm2": 8400,
-    "minPm2": 4900,
-    "maxPm2": 11700
+    "minPm2": 5900,
+    "maxPm2": 10800
   },
   "Les Bossons": {
     "secteur": "Les Bossons",
     "n": 15,
     "medianPm2": 9300,
-    "minPm2": 6500,
-    "maxPm2": 17000
+    "minPm2": 6800,
+    "maxPm2": 12600
   },
   "Les Gaillands": {
     "secteur": "Les Gaillands",
     "n": 7,
     "medianPm2": 14100,
-    "minPm2": 5600,
-    "maxPm2": 22000
+    "minPm2": 8200,
+    "maxPm2": 18300
   },
   "Les Praz": {
     "secteur": "Les Praz",
     "n": 8,
     "medianPm2": 16700,
-    "minPm2": 7800,
-    "maxPm2": 22500
+    "minPm2": 9600,
+    "maxPm2": 20500
   },
   "Les Pélerins": {
     "secteur": "Les Pélerins",
@@ -52,8 +52,8 @@
     "secteur": "Les Tines",
     "n": 7,
     "medianPm2": 11500,
-    "minPm2": 8500,
-    "maxPm2": 16700
+    "minPm2": 8800,
+    "maxPm2": 15000
   },
   "Montroc": {
     "secteur": "Montroc",
@@ -66,21 +66,21 @@
     "secteur": "Passy",
     "n": 7,
     "medianPm2": 5500,
-    "minPm2": 2200,
-    "maxPm2": 11400
+    "minPm2": 3100,
+    "maxPm2": 9700
   },
   "Saint-Gervais": {
     "secteur": "Saint-Gervais",
     "n": 43,
     "medianPm2": 6000,
-    "minPm2": 1200,
-    "maxPm2": 12700
+    "minPm2": 3300,
+    "maxPm2": 7900
   },
   "Sallanches": {
     "secteur": "Sallanches",
     "n": 29,
     "medianPm2": 4400,
-    "minPm2": 2000,
-    "maxPm2": 12300
+    "minPm2": 3200,
+    "maxPm2": 10700
   }
 }

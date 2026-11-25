@@ -289,7 +289,7 @@ export function EstimateurModal() {
                 {annStats && annStats.n > 0 && (
                   <div className="est-secteur-badge">
                     <span className="est-secteur-pm2">{annStats.medianPm2.toLocaleString('fr-FR')} €/m²</span>
-                    <span className="est-secteur-range">
+                    <span className="est-secteur-range" title="80 % des biens de l'échantillon sont dans cette fourchette">
                       [{annStats.minPm2.toLocaleString('fr-FR')} – {annStats.maxPm2.toLocaleString('fr-FR')}]
                     </span>
                     <span className="est-secteur-n">échantillon · {annStats.n} biens</span>

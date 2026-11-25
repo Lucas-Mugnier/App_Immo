@@ -69,11 +69,13 @@ for (const m of maisons) {
 // (stats à zéro) pour qu'aucun bien individuel ne soit identifiable.
 const MIN_N = 3
 const r100 = (x) => Math.round(x / 100) * 100
+// Fourchette affichée = P10–P90 (les min/max bruts sont dominés par des erreurs de surface)
+const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); const i = (s.length - 1) * p; const lo = Math.floor(i); return s[lo] + (s[Math.ceil(i)] - s[lo]) * (i - lo) }
 const secteurs = {}
 for (const h of Object.keys(byHood).sort()) {
   const v = byHood[h]
   secteurs[h] = v.length >= MIN_N
-    ? { secteur: h, n: v.length, medianPm2: r100(median(v)), minPm2: r100(Math.min(...v)), maxPm2: r100(Math.max(...v)) }
+    ? { secteur: h, n: v.length, medianPm2: r100(median(v)), minPm2: r100(pct(v, 0.1)), maxPm2: r100(pct(v, 0.9)) }
     : { secteur: h, n: 0, medianPm2: 0, minPm2: 0, maxPm2: 0 }
 }
 const secPath = join(ROOT, 'src/data/maison_secteurs.json')
