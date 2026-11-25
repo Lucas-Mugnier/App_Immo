@@ -42,6 +42,14 @@ if (!url || !key) {
   process.exit(1)
 }
 
+const looksValid = (key.startsWith('eyJ') && key.split('.').length === 3) || key.startsWith('sb_secret_')
+if (!looksValid) {
+  console.error(`ERREUR : SUPABASE_SERVICE_ROLE_KEY ne ressemble pas à une clé secrète (${key.length} caractères).`)
+  console.error('  → Supabase → Project Settings → API Keys → onglet « Legacy API keys » → service_role → Reveal → copier')
+  console.error('    (une longue chaîne qui commence par eyJ…), ou une clé « sb_secret_… ».')
+  process.exit(1)
+}
+
 const readJson = (p) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'))
 const listings = readJson('private-data/listings.json')
 const maisons  = readJson('private-data/maisons.json')
