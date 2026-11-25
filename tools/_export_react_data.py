@@ -76,7 +76,9 @@ _COMMUNE_TEXT = [  # (motif normalisé, clé COMMUNE_MAP) — plus long d'abord
 
 def _commune_from_slug(url: str | None) -> str | None:
     u = url or ''
-    m = (re.search(r'/([a-z][a-z0-9-]*?)-7[34]/', u)
+    # Nouveau format SeLoger : …/haute-savoie-74/chamonix-mont-blanc-74400/ID → segment à code postal
+    m = (re.search(r'/([a-z][a-z0-9-]+?)-7[34]\d{3}(?:/|$)', u)
+         or re.search(r'/(?!haute-savoie-)([a-z][a-z0-9-]*?)-7[34]/', u)
          or re.search(r'/annonce/vente/([a-z0-9-]+)/', u))
     if not m:
         return None

@@ -8,17 +8,17 @@
   },
   "Chamonix (secteur non précisé)": {
     "secteur": "Chamonix (secteur non précisé)",
-    "n": 93,
-    "medianPm2": 10700,
-    "minPm2": 6600,
-    "maxPm2": 17800
+    "n": 102,
+    "medianPm2": 10600,
+    "minPm2": 7000,
+    "maxPm2": 17500
   },
   "Chamonix Centre": {
     "secteur": "Chamonix Centre",
-    "n": 9,
-    "medianPm2": 10600,
-    "minPm2": 7500,
-    "maxPm2": 11900
+    "n": 10,
+    "medianPm2": 9900,
+    "minPm2": 7600,
+    "maxPm2": 11800
   },
   "Combloux": {
     "secteur": "Combloux",
@@ -36,10 +36,10 @@
   },
   "Domancy": {
     "secteur": "Domancy",
-    "n": 5,
-    "medianPm2": 4900,
-    "minPm2": 2100,
-    "maxPm2": 10200
+    "n": 7,
+    "medianPm2": 5200,
+    "minPm2": 2900,
+    "maxPm2": 9500
   },
   "Les Bossons": {
     "secteur": "Les Bossons",
@@ -78,10 +78,10 @@
   },
   "Magland": {
     "secteur": "Magland",
-    "n": 3,
-    "medianPm2": 2200,
-    "minPm2": 2000,
-    "maxPm2": 4200
+    "n": 4,
+    "medianPm2": 3300,
+    "minPm2": 2100,
+    "maxPm2": 4600
   },
   "Megève": {
     "secteur": "Megève",
@@ -99,30 +99,30 @@
   },
   "Passy": {
     "secteur": "Passy",
-    "n": 22,
+    "n": 30,
     "medianPm2": 3600,
-    "minPm2": 2200,
-    "maxPm2": 5400
+    "minPm2": 2600,
+    "maxPm2": 6400
   },
   "Saint-Gervais": {
     "secteur": "Saint-Gervais",
-    "n": 64,
-    "medianPm2": 6500,
-    "minPm2": 4300,
-    "maxPm2": 10700
+    "n": 83,
+    "medianPm2": 6800,
+    "minPm2": 4400,
+    "maxPm2": 10800
   },
   "Sallanches": {
     "secteur": "Sallanches",
-    "n": 34,
-    "medianPm2": 4900,
-    "minPm2": 2800,
-    "maxPm2": 6700
+    "n": 40,
+    "medianPm2": 5000,
+    "minPm2": 2900,
+    "maxPm2": 6800
   },
   "Servoz": {
     "secteur": "Servoz",
-    "n": 7,
+    "n": 11,
     "medianPm2": 8400,
-    "minPm2": 4800,
-    "maxPm2": 9300
+    "minPm2": 5200,
+    "maxPm2": 8700
   }
 }
