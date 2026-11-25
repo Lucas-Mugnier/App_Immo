@@ -101,6 +101,7 @@ export function terrainLabel(surfTerrain: number): string {
 export const HOOD_TO_DVF_COMMUNE: Record<string, string> = {
   'Argentière':      'CHAMONIX MONT BLANC',
   'Chamonix Centre': 'CHAMONIX MONT BLANC',
+  'Chamonix (secteur non précisé)': 'CHAMONIX MONT BLANC',
   'Les Bossons':     'CHAMONIX MONT BLANC',
   'Les Gaillands':   'CHAMONIX MONT BLANC',
   'Les Praz':        'CHAMONIX MONT BLANC',

@@ -66,6 +66,7 @@ const NEIGHBOURHOOD_SECTION: Record<string, string> = {
   'Les Pélerins':    'E',
   'Les Gaillands':   'G',
   'Chamonix Centre': 'G',
+  'Chamonix (secteur non précisé)': 'G',
   'Les Houches':     'C',
 }
 

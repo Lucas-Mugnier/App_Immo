@@ -48,7 +48,93 @@ COMMUNE_MAP = {
     "PASSY":                   ("Passy",         "Passy"),
     "SERVOZ":                  ("Servoz",        "Servoz"),
     "DOMANCY":                 ("Domancy",       "Domancy"),
+    "VALLORCINE":              ("Vallorcine",    "Vallorcine"),
+    "COMBLOUX":                ("Combloux",      "Combloux"),
+    "MEGEVE":                  ("Megève",        "Megève"),
+    "DEMI QUARTIER":           ("Demi-Quartier", "Demi-Quartier"),
+    "MAGLAND":                 ("Magland",       "Magland"),
+    "CORDON":                  ("Cordon",        "Cordon"),
+    "LES CONTAMINES MONTJOIE": ("Les Contamines", "Les Contamines"),
 }
+
+# ── Commune RÉELLE d'une annonce ──────────────────────────────────────────────
+# La colonne `commune` de la base contient la commune de RECHERCHE (les portails
+# renvoient aussi les communes voisines), pas forcément celle du bien. Ordre de
+# confiance : slug de commune dans l'URL > adresse du bien (si commune connue de
+# la vallée) > mention explicite « à <commune> » dans titre/description > base.
+_KNOWN_COMMUNES = {k: k for k in COMMUNE_MAP}
+_COMMUNE_TEXT = [  # (motif normalisé, clé COMMUNE_MAP) — plus long d'abord
+    ('chamonix-mont-blanc', 'CHAMONIX MONT BLANC'), ('chamonix mont blanc', 'CHAMONIX MONT BLANC'),
+    ('saint-gervais-les-bains', 'SAINT GERVAIS LES BAINS'), ('saint gervais les bains', 'SAINT GERVAIS LES BAINS'),
+    ('saint-gervais', 'SAINT GERVAIS LES BAINS'), ('saint gervais', 'SAINT GERVAIS LES BAINS'),
+    ('les contamines', 'LES CONTAMINES MONTJOIE'), ('demi-quartier', 'DEMI QUARTIER'),
+    ('les houches', 'LES HOUCHES'), ('sallanches', 'SALLANCHES'), ('passy', 'PASSY'),
+    ('servoz', 'SERVOZ'), ('domancy', 'DOMANCY'), ('vallorcine', 'VALLORCINE'),
+    ('combloux', 'COMBLOUX'), ('megeve', 'MEGEVE'), ('magland', 'MAGLAND'), ('cordon', 'CORDON'),
+    ('chamonix', 'CHAMONIX MONT BLANC'), ('argentiere', 'CHAMONIX MONT BLANC'),
+]
+
+def _commune_from_slug(url: str | None) -> str | None:
+    u = url or ''
+    m = (re.search(r'/([a-z][a-z0-9-]*?)-7[34]/', u)
+         or re.search(r'/annonce/vente/([a-z0-9-]+)/', u))
+    if not m:
+        return None
+    slug = m.group(1).replace('-', ' ').upper()
+    return slug if slug in COMMUNE_MAP else (slug if slug else None)
+
+def _commune_from_text(text: str, explicit_only: bool) -> str | None:
+    t = _norm(text or '')
+    # « Vallée de Chamonix » désigne la vallée, pas la commune
+    t = re.sub(r'vallee de chamonix(?:[ -]mont[ -]blanc)?', 'vallee', t)
+    # Noms d'agences contenant une commune (« Chamonix Sotheby's », « Megève Immobilier »…)
+    t = re.sub(r"\b[\w-]+(?:[ -]mont[ -]blanc)?\s+(?:sotheby'?s|immobilier|immo|properties|real estate|realty|estates?|agence)\b", ' ', t)
+    if explicit_only:
+        # Commune citée comme LIEU du bien : « à Combloux », « aux Houches »,
+        # « situé à … », ou en tout début de texte (« LES HOUCHES - Duplex … »).
+        # « à 10 min de Chamonix », « proche des Houches » ne déclenchent rien.
+        best = None
+        for pat, key in _COMMUNE_TEXT:
+            core = pat[4:] if pat.startswith('les ') else pat
+            rx = (r"(?:^[^.]{0,40}?(?:^|[,\-–:]\s*)" + re.escape(pat) + r"\b)"
+                  r"|(?:(?:^|[\s,(.])(?:a|au|sur|commune de|situee? a|village de)\s+(?:la commune de\s+)?" + re.escape(pat) + r"\b)"
+                  r"|(?:(?:^|[\s,(.])aux\s+" + re.escape(core) + r"\b)")
+            for m in re.finditer(rx, t):
+                # Ignore les trajets / distances : « reliant Saint-Gervais à Megève »,
+                # « navette à Chamonix », « à 10 km de… » (déjà exclu par le motif)
+                before = t[max(0, m.start() - 45):m.start()]
+                if re.search(r"reliant|liaison|entre|navette|bus|train|telecabine|route|depuis|acces|proximite|proche|minutes?|\bmin\b|\bkm\b", before):
+                    continue
+                if any(re.search(r'\b' + re.escape(p2) + r'\b', before) for p2, _ in _COMMUNE_TEXT if p2 != pat):
+                    continue
+                if best is None or m.start() < best[0]:
+                    best = (m.start(), key)   # la première mention valable l'emporte
+                break
+        return best[1] if best else None
+    for pat, key in _COMMUNE_TEXT:
+        if re.search(r'\b' + re.escape(pat) + r'\b', t):
+            return key
+    return None
+
+def resolve_commune(row) -> tuple[str, str]:
+    """Retourne (clé commune, source) : source ∈ url | texte | adresse | base."""
+    c = _commune_from_slug(row["url"])
+    if c:
+        return c, 'url'
+    # Le texte de l'annonce passe avant adresse_raw : sur certains portails,
+    # adresse_raw est la ville de l'agence ou de la recherche, pas celle du bien.
+    full = row["description_full"] if "description_full" in row.keys() else ''
+    for field in (row["titre"], row["description"], full):   # chaque champ testé séparément (ancre de début)
+        c = _commune_from_text(field or '', explicit_only=True)
+        if c:
+            return c, 'texte'
+    addr = row["adresse_raw"] or ''
+    if 'cedex' not in addr.lower():
+        c = _commune_from_text(addr, explicit_only=False)
+        if c:
+            return c, 'adresse'
+    return (row["commune"] or '').upper().strip(), 'base'
+
 
 # DB avm_model tag → React union literal
 def map_avm_model(tag):
@@ -198,6 +284,12 @@ _SLUG_NEIGHBOURHOOD = {
     # 'la-tour-argentiere-les-praz':  unmapped
 }
 
+# Formulations « centre » : testées APRÈS le slug d'URL (un quartier précis l'emporte ;
+# « proche du centre-ville » est fréquent dans les annonces d'autres quartiers)
+_DESC_CENTRE = ['chamonix centre', 'coeur de chamonix', 'hyper centre', 'hyper-centre', 'hypercentre',
+                'en plein centre', 'centre historique', 'au centre de chamonix', 'le savoy',
+                'quartier du savoy', 'aiguille du midi']
+
 _DESC_NEIGHBOURHOOD = [
     # Checked against description + title (normalized — handles accents and encoding artifacts)
     (['montroc'],                                                    'Montroc'),
@@ -209,7 +301,10 @@ _DESC_NEIGHBOURHOOD = [
     (['gaillands', 'bois du bouchet'],                               'Les Gaillands'),
     (['pelerins', 'le betty'],                                       'Les Pélerins'),
     (['bossons', 'moussoux', 'chemin napoleon'],                     'Les Bossons'),
-    (['chavants', 'les houches', 'houches'],                         'Les Houches'),
+    (['chavants'],                                                   'Les Houches'),
+    # NB : « les houches » retiré — dans une description c'est presque toujours
+    # une indication de proximité (« à 5 min des Houches »). La commune réelle
+    # est désormais déterminée par resolve_commune().
 ]
 
 # SeLoger multi-zone adresse_raw labels — contain multiple neighbourhood names so
@@ -238,7 +333,8 @@ _ADDR_COMMUNE = [
     (['saint-gervais', 'saint gervais'],       'Saint-Gervais'),
     (['passy'],                                'Passy'),
     (['sallanches'],                           'Sallanches'),
-    (['chamonix'],                             'Chamonix Centre'),
+    # « Chamonix » seul ne dit rien du quartier → secteur non précisé (avant : Chamonix Centre par défaut)
+    (['chamonix'],                             'Chamonix (secteur non précisé)'),
 ]
 
 
@@ -251,6 +347,20 @@ def _norm(s: str) -> str:
     s = re.sub(r'(?<=[a-zA-Z])\?(?=[a-zA-Z])', 'e', s)
     s = ''.join(c for c in unicodedata.normalize('NFKD', s) if unicodedata.category(c) != 'Mn')
     return s.lower()
+
+
+_PROXIMITY = re.compile(
+    r"proximite|proche|pres d|acces|desservant|dessert|bus|navette|vue|face a|face au|"
+    r"minutes?|\bmin\b|\bkm\b|depuis|jusqu|vers |direction|reliant|pistes? d|domaines? |remontees|gare d|telepherique d|telecabine d"
+)
+
+def _kw_located(text: str, kw: str) -> bool:
+    """Vrai si `kw` apparaît au moins une fois SANS indicateur de proximité juste avant."""
+    for m in re.finditer(re.escape(kw), text):
+        before = text[max(0, m.start() - 40):m.start()]
+        if not _PROXIMITY.search(before):
+            return True
+    return False
 
 
 def detect_neighbourhood(adresse_raw: str | None, url: str | None, description: str = '', listing_id: str = '', titre: str = '') -> str:
@@ -269,9 +379,11 @@ def detect_neighbourhood(adresse_raw: str | None, url: str | None, description: 
                 return name
 
     # 2. Description + title keywords — checked before URL slug (content > zone slug)
+    #    Une mention de proximité (« à proximité des Grands Montets », « bus vers
+    #    Argentière », « accès au golf ») ne localise pas le bien : ignorée.
     if text:
         for kws, name in _DESC_NEIGHBOURHOOD:
-            if any(k in text for k in kws):
+            if any(_kw_located(text, k) for k in kws):
                 return name
 
     # 3. URL slug — SeLoger zone assignment (can be stale, hence checked after content)
@@ -281,12 +393,16 @@ def detect_neighbourhood(adresse_raw: str | None, url: str | None, description: 
         if slug in _SLUG_NEIGHBOURHOOD:
             return _SLUG_NEIGHBOURHOOD[slug]
 
+    # 3b. Formulations « centre » explicites
+    if text and any(k in text for k in _DESC_CENTRE):
+        return 'Chamonix Centre'
+
     # 4. Commune-level fallback from adresse_raw
     for kws, name in _ADDR_COMMUNE:
         if any(k in addr for k in kws):
             return name
 
-    return 'Chamonix Centre'
+    return 'Chamonix (secteur non précisé)'
 
 
 _STRUCTURED_PRODUCT_KEYWORDS = [
@@ -460,6 +576,7 @@ def _pm2_suspect_flag(prix, surface, cfg_key: str) -> bool:
 # SeLoger / ChacunSonLieu : maisons ~11-17€/m² selon quartier
 _MAISON_RENT_PM2: dict[str, float] = {
     'Chamonix Centre': 17.0,
+    'Chamonix (secteur non précisé)': 17.0,
     'Les Praz':        15.5,
     'Les Bossons':     15.0,
     'Les Pélerins':    14.5,
@@ -551,18 +668,25 @@ today = datetime.today().isoformat()[:10]
 # ── Appartements ──────────────────────────────────────────────────────────────
 listings = []
 for row in con.execute(
-    "SELECT * FROM listings WHERE type_bien='appartement' AND active=1 AND commune != 'LES HOUCHES' ORDER BY first_seen DESC"
+    "SELECT * FROM listings WHERE type_bien='appartement' AND active=1 ORDER BY first_seen DESC"
 ):
     commune_db = (row["commune"] or "").upper().strip()
-    display_name, cfg_key = COMMUNE_MAP.get(commune_db, (commune_db.title(), commune_db.title()))
+    commune_real, commune_src = resolve_commune(row)
+    if commune_real == 'LES HOUCHES':
+        continue
+    display_name, cfg_key = COMMUNE_MAP.get(commune_real, (commune_real.title(), commune_real.title()))
 
     prix = row["prix"]
     prix_initial = row["prix_initial"] or prix
     price_drop = (prix_initial - prix) if (prix_initial and prix and prix < prix_initial) else None
 
-    neighbourhood = detect_neighbourhood(row["adresse_raw"], row["url"], row["description"] or '', row["id"], row["titre"] or '')
-    if neighbourhood == 'Les Houches':
-        continue
+    # Quartier : seulement pour Chamonix ; ailleurs le « quartier » est la commune
+    if commune_real == 'CHAMONIX MONT BLANC':
+        neighbourhood = detect_neighbourhood(row["adresse_raw"], row["url"], f'{row["description"] or ""} {row["description_full"] or ""}', row["id"], row["titre"] or '')
+        if neighbourhood == 'Les Houches':
+            continue
+    else:
+        neighbourhood = display_name
 
     # Carrez surface correction
     surface_total  = row["surface"] or 0
@@ -577,6 +701,10 @@ for row in con.execute(
         avm_ratio_eff = round(prix / avm_pred_eff, 3) if prix and avm_pred_eff else avm_ratio_raw
     else:
         avm_pred_eff, avm_ratio_eff = avm_pred_raw, avm_ratio_raw
+    # AVM calculée en amont avec le modèle de la commune de RECHERCHE : si le bien est
+    # en réalité dans une autre commune, l'estimation n'est pas fiable → neutralisée.
+    if commune_real != commune_db:
+        avm_pred_eff, avm_ratio_eff = None, None
     # Piste B: toujours recomputer depuis le ratio pour appliquer la formule continue
     avm_score_eff = _avm_ratio_to_score(avm_ratio_eff)
 
@@ -623,6 +751,7 @@ for row in con.execute(
         "first_seen":           row["first_seen"] or today,
         "urls":                 [row["url"]] if row["url"] else [],
         "_location_original":   commune_db,
+        "_commune_source":      commune_src,
         "_loc_corrected":       False,
         "days_on_market":       row["jours_marche"] or 0,
         "price_history":        ph_by_id.get(row["id"], []),
@@ -647,16 +776,26 @@ print(f"✓ listings.json — {len(listings)} appartements ({dedup_removed} doub
 # ── Maisons ───────────────────────────────────────────────────────────────────
 maisons = []
 for row in con.execute(
-    "SELECT * FROM listings WHERE type_bien='maison' AND active=1 AND commune != 'LES HOUCHES' ORDER BY first_seen DESC"
+    "SELECT * FROM listings WHERE type_bien='maison' AND active=1 ORDER BY first_seen DESC"
 ):
     ph = ph_by_id.get(row["id"], [])
-    m_neighbourhood = detect_neighbourhood(row["adresse_raw"], row["url"], row["description"] or '', row["id"], row["titre"] or '')
-    if m_neighbourhood == 'Les Houches':
+    m_commune, m_commune_src = resolve_commune(row)
+    if m_commune == 'LES HOUCHES':
         continue
+    if m_commune == 'CHAMONIX MONT BLANC':
+        m_neighbourhood = detect_neighbourhood(row["adresse_raw"], row["url"], f'{row["description"] or ""} {row["description_full"] or ""}', row["id"], row["titre"] or '')
+        if m_neighbourhood == 'Les Houches':
+            continue
+    else:
+        m_neighbourhood = COMMUNE_MAP.get(m_commune, (m_commune.title(),))[0]
     m_reno           = detect_renovation(row["titre"], row["description"])
     m_struct         = is_structured_product(row["id"], row["titre"], row["description"], row["description_full"] if "description_full" in row.keys() else None)
+    # AVM neutralisée si la commune réelle diffère de la commune de recherche (cf. apparts)
+    m_avm_ok         = m_commune == (row["commune"] or "").upper().strip()
+    m_avm_pred       = row["avm_pred"] if m_avm_ok else None
+    m_avm_ratio      = row["avm_ratio"] if m_avm_ok else None
     # Fix 2: score continu pour maisons — recomputer depuis ratio (Piste B)
-    m_avm_score_cont = _avm_ratio_to_score(row["avm_ratio"])
+    m_avm_score_cont = _avm_ratio_to_score(m_avm_ratio)
     m_raw_score      = _maison_adjusted_score(m_avm_score_cont, row["surface"], m_reno, row["jours_marche"])
     m_prix_initial   = row["prix_initial"] if "prix_initial" in row.keys() and row["prix_initial"] else row["prix"]
     m_bonus          = drop_pct_bonus(m_prix_initial, row["prix"])
@@ -682,8 +821,8 @@ for row in con.execute(
         "prix_initial":   row["prix_initial"] or row["prix"] or 0,
         "nb_baisses":     row["nb_baisses"] or 0,
         "historique_prix": ph,
-        "avm_pred":       row["avm_pred"],
-        "avm_ratio":      row["avm_ratio"],
+        "avm_pred":       m_avm_pred,
+        "avm_ratio":      m_avm_ratio,
         "avm_score":      m_score,
         "first_seen":     row["first_seen"] or today,
         "notes":          row["notes"],
@@ -693,7 +832,7 @@ for row in con.execute(
         "description":    m_desc,
         "needs_renovation": m_reno,
         "is_structured":  m_struct,
-        "avm_suspect":    bool((row["avm_ratio"] is not None and row["avm_ratio"] < 0.3) or m_pm2_suspect),
+        "avm_suspect":    bool((m_avm_ratio is not None and m_avm_ratio < 0.3) or m_pm2_suspect),
         "yield":          compute_maison_yield(row["prix"] or 0, row["surface"] or 0, m_neighbourhood),
         "avm_model":      map_avm_model(row["avm_model"]) if "avm_model" in row.keys() else None,
     })

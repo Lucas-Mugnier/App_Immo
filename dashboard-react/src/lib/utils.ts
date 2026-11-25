@@ -113,6 +113,7 @@ export const NEIGHBOURHOOD_ORDER = [
   'Les Pélerins',
   'Les Gaillands',
   'Chamonix Centre',
+  'Chamonix (secteur non précisé)',
   'Les Praz',
   'Les Tines',
   'Le Lavancher',
@@ -124,4 +125,9 @@ export const NEIGHBOURHOOD_ORDER = [
   'Sallanches',
   'Passy',
   'Domancy',
+  'Combloux',
+  'Megève',
+  'Demi-Quartier',
+  'Magland',
+  'Les Contamines',
 ]

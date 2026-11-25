@@ -13,6 +13,7 @@ const NB_GEO: Record<string, [number, number]> = {
   'Les Pélerins':    [45.9112, 6.8650],
   'Les Gaillands':   [45.9150, 6.8580],
   'Chamonix Centre': [45.9237, 6.8694],
+  'Chamonix (secteur non précisé)': [45.9237, 6.8694],
   'Les Praz':        [45.9391, 6.8989],
   'Les Tines':       [45.9480, 6.9123],
   'Le Lavancher':    [45.9650, 6.9250],
@@ -24,6 +25,11 @@ const NB_GEO: Record<string, [number, number]> = {
   'Sallanches':      [45.9318, 6.6336],
   'Passy':           [45.9194, 6.6905],
   'Domancy':         [45.9213, 6.6612],
+  'Combloux':        [45.8967, 6.6417],
+  'Megève':          [45.8567, 6.6178],
+  'Demi-Quartier':   [45.8800, 6.6300],
+  'Magland':         [46.0206, 6.6219],
+  'Les Contamines':  [45.8217, 6.7272],
 }
 
 // ── Geo: DVF commune centroids ────────────────────────────────────────────────

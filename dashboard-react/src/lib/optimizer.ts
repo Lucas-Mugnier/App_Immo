@@ -95,6 +95,7 @@ const NEIGHBOURHOOD_CONFORT: Record<string, number> = {
   'Montroc':            0.82,
   'Le Tour':            0.80,
   'Chamonix Centre':    0.78,
+  'Chamonix (secteur non précisé)': 0.78,
   'Les Tines':          0.72,
   'Les Bois':           0.70,
   'Les Pélerins':       0.60,
