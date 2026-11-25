@@ -131,7 +131,7 @@ function DvfTrends() {
               <div className="insight-dvf-bar-wrap"><Bar pct={pct} /></div>
               <span className="insight-dvf-cagr"
                 style={{ color: c.cagr_pct >= 7 ? 'var(--green)' : c.cagr_pct >= 4 ? 'var(--accent)' : 'var(--text-faint)' }}>
-                +{c.cagr_pct.toFixed(1)}%/an
+                {c.cagr_pct >= 0 ? '+' : '−'}{Math.abs(c.cagr_pct).toFixed(1)}%/an
               </span>
               <div className="insight-dvf-spark"><Spark byYear={c.by_year} /></div>
             </div>
@@ -358,19 +358,16 @@ function MapView({ insightType, metric, sector, dark, layers, bienFilter }: MapV
       const map = L.map(mapRef.current, { center, zoom })
       mapInstance.current = map
 
-      // Tile layer — dark or light
-      if (dark) {
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap © CartoDB', opacity: 0.85,
-        }).addTo(map)
-      } else {
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap © CartoDB', opacity: 1,
-        }).addTo(map)
-        L.tileLayer('https://tiles.opensnowmap.org/pistes/{z}/{x}/{y}.png', {
-          attribution: '© OpenSnowMap.org', opacity: 0.8, maxZoom: 18,
-        }).addTo(map)
-      }
+      // Fond de carte OpenStreetMap (les fonds CARTO exigent désormais une clé API).
+      // Mode sombre : même fond, assombri en CSS (.map-dark .leaflet-tile-pane).
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map)
+      L.tileLayer('https://tiles.opensnowmap.org/pistes/{z}/{x}/{y}.png', {
+        attribution: '© OpenSnowMap.org', opacity: 0.8, maxZoom: 18,
+      }).addTo(map)
+      mapRef.current.classList.toggle('map-dark', dark)
 
       const DVF_COLOR  = '#6b8cba'                          // muted blue — DVF transactions
 

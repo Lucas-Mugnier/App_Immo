@@ -25,8 +25,8 @@ export function AboutModal() {
         <p>
           Les statistiques de marché, la carte des ventes et l'estimateur reposent sur
           les « Demandes de valeurs foncières » (DVF) publiées par la DGFiP sur
-          data.gouv.fr, sous Licence Ouverte Etalab 2.0. Fonds de carte © OpenStreetMap,
-          © CARTO, © OpenSnowMap. Le second modèle de l'estimateur maisons s'appuie
+          data.gouv.fr, sous Licence Ouverte Etalab 2.0. Fonds de carte © contributeurs
+          OpenStreetMap, © OpenSnowMap. Le second modèle de l'estimateur maisons s'appuie
           sur un échantillon de biens actuellement sur le marché, sous forme de
           statistiques agrégées et lissées.
         </p>

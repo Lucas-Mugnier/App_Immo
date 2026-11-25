@@ -6152,3 +6152,26 @@ a.an-detail-title:hover { text-decoration: underline; color: var(--accent); }
 .public-intro-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .public-intro-text { font-size: 0.88rem; line-height: 1.55; color: var(--text-dim); max-width: 640px; }
 .public-intro-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Carte : mode sombre sur fond OSM ── */
+.map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
+
+/* ── Responsive en-tête & onglets (mobile) ── */
+.tab-bar { overflow-x: auto; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn { flex-shrink: 0; white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .header-content {
+    grid-template-columns: auto 1fr;
+    height: 76px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .header-left { display: none; }
+  .header-logo-glass { justify-self: start; padding: 6px 12px; border-radius: 12px; }
+  .header-logo-img { height: 34px; max-width: 46vw; }
+  .header-right { gap: 6px; }
+  .header-right .chip { display: none; }
+  .tab-bar { padding: 0 8px; top: 0; }
+}

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { loadPrivateData } from '@/lib/privateData'
@@ -36,11 +36,12 @@ export default function App() {
   const dataVersion     = useStore((s) => s.dataVersion)
   const bumpDataVersion = useStore((s) => s.bumpDataVersion)
   const loadedFor       = useRef<string | null>(null)
+  const [sessionChecked, setSessionChecked] = useState(!supabase)
 
   // Session Supabase
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setSessionChecked(true) })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
   }, [setSession])
@@ -62,6 +63,19 @@ export default function App() {
       if (st === 'ready') bumpDataVersion()
     })
   }, [session, setDataStatus, bumpDataVersion])
+
+  // Visiteur anonyme revenant avec un onglet privé mémorisé : on ouvre le Marché
+  // plutôt qu'un écran verrouillé (une seule fois, au premier chargement).
+  const setActiveTab = useStore((s) => s.setActiveTab)
+  const firstResolve = useRef(true)
+  useEffect(() => {
+    if (!sessionChecked) return
+    if (session && (dataStatus === 'anon' || dataStatus === 'loading')) return // chargement en cours
+    if (!firstResolve.current) return
+    firstResolve.current = false
+    const t: TabId = LEGACY[activeTab as string] ?? activeTab
+    if (dataStatus !== 'ready' && PRIVATE_TABS.has(t)) setActiveTab('insights')
+  }, [sessionChecked, session, dataStatus, activeTab, setActiveTab])
 
   const tab: TabId = LEGACY[activeTab as string] ?? activeTab
   const ready = dataStatus === 'ready'
